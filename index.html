@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RT快來</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            background-color: #090d16;
+        }
+
+        canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+
+        .treatment-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .treatment-scroll::-webkit-scrollbar-track {
+            background: #fff1f2;
+            border-radius: 8px;
+        }
+        .treatment-scroll::-webkit-scrollbar-thumb {
+            background: #e11d48;
+            border-radius: 8px;
+            border: 2px solid #fff1f2;
+        }
+        .treatment-scroll::-webkit-scrollbar-thumb:hover {
+            background: #be123c;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col items-center justify-center relative text-slate-700 bg-slate-950 select-none">
+
+    <div id="game-container" class="relative w-full h-full overflow-hidden flex items-center justify-center">
+        <canvas id="gameCanvas" class="block w-full h-full bg-slate-950"></canvas>
+
+        <!-- Top Navigation HUD Bar -->
+        <div class="absolute top-3 left-3 right-3 flex justify-between items-center pointer-events-none z-20 gap-2">
+            <!-- Shift Timer & Score -->
+            <div class="flex items-center gap-3 bg-white/95 backdrop-blur border-2 border-rose-300 rounded-2xl p-2 px-4 shadow-lg pointer-events-auto">
+                <div class="flex items-center gap-2 text-rose-700 font-bold">
+                    <i class="fa-solid fa-clock text-amber-500 animate-pulse"></i>
+                    <span class="text-xs text-slate-500">剩餘時間:</span>
+                    <span id="hud-timer" class="font-mono text-base text-slate-900">03:00</span>
+                </div>
+                <div class="h-5 w-0.5 bg-rose-200"></div>
+                <div class="flex items-center gap-2 text-emerald-600 font-bold">
+                    <i class="fa-solid fa-heart-circle-check text-emerald-500"></i>
+                    <span class="text-xs text-slate-500">急救成功:</span>
+                    <span id="hud-score" class="font-mono text-base text-emerald-600">0</span>
+                </div>
+                <div class="h-5 w-0.5 bg-rose-200"></div>
+                <div class="flex items-center gap-1.5 text-amber-500 font-bold">
+                    <i class="fa-solid fa-coins"></i>
+                    <span id="hud-coins" class="font-mono text-base">0</span>
+                </div>
+            </div>
+
+            <!-- Title Header -->
+            <div class="hidden lg:flex bg-white/95 backdrop-blur border-2 border-rose-300 rounded-2xl px-6 py-2 items-center gap-3 shadow-lg">
+                <div class="w-3 h-3 rounded-full bg-rose-600 animate-ping"></div>
+                <span class="text-lg font-black tracking-wider text-rose-950">RT快來</span>
+            </div>
+
+            <!-- Action Controls & Sound Buttons -->
+            <div class="flex items-center gap-2 pointer-events-auto">
+                <button id="handbook-toggle-btn" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition text-xs sm:text-sm">
+                    <i class="fa-solid fa-book-medical"></i> <span>RT手冊</span>
+                </button>
+                <button id="shop-toggle-btn" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-black px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition text-xs sm:text-sm">
+                    <i class="fa-solid fa-cart-shopping"></i> <span>裝備補給</span>
+                </button>
+                <button id="audio-btn" class="w-10 h-10 bg-white border-2 border-rose-200 rounded-xl flex items-center justify-center text-rose-600 hover:border-rose-400 active:scale-95 transition shadow">
+                    <i class="fa-solid fa-volume-high" id="audio-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Assessment Modal -->
+        <div id="assess-modal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-40 hidden">
+            <div class="max-w-3xl w-full bg-white border-2 border-rose-400 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh] text-slate-700">
+                
+                <div class="flex justify-between items-start border-b border-rose-100 pb-3 flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-300 flex items-center justify-center text-2xl text-rose-600 flex-shrink-0">
+                            <i class="fa-solid fa-truck-medical animate-bounce"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 id="patient-bed-title" class="text-lg sm:text-xl font-black text-rose-950">急診 1 床</h3>
+                                <span id="patient-name-info" class="text-base font-bold text-slate-800">張先生</span>
+                                <span id="patient-demographics" class="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full font-bold">52歲 / 男</span>
+                            </div>
+                            <p id="patient-diagnosis-label" class="text-xs text-rose-700 font-bold mt-1">主訴：重度 ARDS 呼吸衰竭、意識混濁 (GCS 7)</p>
+                        </div>
+                    </div>
+                    <button onclick="game.closeAssessment()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Vital Signs Monitor Banner -->
+                <div class="my-3 bg-rose-50/90 rounded-2xl p-3 border border-rose-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center flex-shrink-0">
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold">SpO2 血氧飽和度</div>
+                        <div id="assess-spo2" class="text-lg sm:text-xl font-mono font-black text-rose-600 animate-pulse">68%</div>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold">RR 呼吸速率</div>
+                        <div id="assess-rr" class="text-lg sm:text-xl font-mono font-black text-amber-500">38 次/分</div>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold">聽診 (Auscultation)</div>
+                        <div id="assess-breath" class="text-xs font-bold text-rose-600 mt-1 animate-bounce">
+                            <i class="fa-solid fa-stethoscopes mr-1"></i> Coarse crackle (粗濕囉音)
+                        </div>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold">ABG / 臨床狀態</div>
+                        <div id="assess-abg" class="text-xs font-bold text-rose-800 mt-1">PaO2: 45 mmHg, GCS 7</div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Treatments & Devices -->
+                <div class="treatment-scroll overflow-y-auto pr-2 space-y-3 flex-1 max-h-[55vh]">
+                    
+                    <!-- Medication Options -->
+                    <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3">
+                        <div class="text-xs font-bold text-amber-800 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-pills text-amber-600"></i>
+                            <span>霧化吸入藥物選擇 (Medication Inhalation Therapy)：</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:bg-amber-100/50 transition">
+                                <input type="radio" name="medication-choice" value="none" checked class="w-4 h-4 accent-sky-500">
+                                <span class="font-bold text-slate-700">無須用藥 (純氧/呼吸器)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:bg-amber-100/50 transition">
+                                <input type="radio" name="medication-choice" value="bronchodilator" class="w-4 h-4 accent-amber-500">
+                                <span class="font-bold text-amber-900">支氣管擴張劑 (Combivent)</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-rose-200 cursor-pointer hover:bg-rose-100/50 transition">
+                                <input type="radio" name="medication-choice" value="bosmin" class="w-4 h-4 accent-rose-500">
+                                <span class="font-bold text-rose-700">Bosmin (Epinephrine) 吸入</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="text-xs font-bold text-slate-600 flex items-center gap-1.5 pt-1">
+                        <i class="fa-solid fa-kit-medical text-rose-500"></i> 請選擇氧氣與呼吸處置設備 (O2 & Ventilation Support Devices)：
+                    </div>
+
+                    <!-- 9 Oxygen Devices Grid (ORDER: Intubation ventilator is LAST) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+
+                        <button onclick="game.applyTreatment('hfnc')" class="bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-300 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-wind"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-emerald-950">1. HFNC 高流量鼻導管</div>
+                                <div class="text-[11px] text-emerald-700 font-bold">流速 30-60 L/min | 急性嚴重缺氧性呼吸衰竭 (NRM無效)</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('nasal_cannula')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-sky-200 text-sky-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-headset"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-sky-950">2. 鼻導管 (Nasal Cannula)</div>
+                                <div class="text-[11px] text-slate-500">流速 1-6 L/min | FiO2 24-44% (輕度低血氧)</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('venturi_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-filter"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-amber-950">3. 凡吐利面罩 (Venturi Mask)</div>
+                                <div class="text-[11px] text-slate-500">精準 FiO2 24-50% (COPD 防止高碳酸血症)</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('nrm')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-rose-200 text-rose-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-mask-ventilator"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-rose-950">4. NRM (非再吸入面罩)</div>
+                                <div class="text-[11px] text-slate-500">流速 10-15 L/min | 高濃度 FiO2 60-90%</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('aerosol_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-teal-200 text-teal-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-smog"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-teal-950">5. Aerosol Mask (潮濕面罩)</div>
+                                <div class="text-[11px] text-slate-500">高流量加濕 | 稀釋濃痰 / 拔管水腫</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('tracheal_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-purple-200 text-purple-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-water"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-purple-950">6. Tracheal mask (氣切面罩)</div>
+                                <div class="text-[11px] text-slate-500">氣切造口專用 | 氣道加溫加濕</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('bipap')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-200 text-cyan-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-fan"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-cyan-950">7. 非侵襲性正壓 (BiPAP / CPAP)</div>
+                                <div class="text-[11px] text-slate-500">高碳酸酸血症 / 急性肺水腫急救</div>
+                            </div>
+                        </button>
+
+                        <button onclick="game.applyTreatment('simple_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-blue-200 text-blue-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-head-side-mask"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-blue-950">8. 簡單面罩 (Simple Mask)</div>
+                                <div class="text-[11px] text-slate-500">流速 5-10 L/min | FiO2 35-50%</div>
+                            </div>
+                        </button>
+
+                        <!-- LAST OPTION MUST BE INVASIVE VENTILATOR -->
+                        <button onclick="game.applyTreatment('ventilator')" class="bg-rose-100 hover:bg-rose-200 border-2 border-rose-400 p-3 rounded-2xl text-left transition flex items-center gap-3 col-span-1 sm:col-span-2 active:scale-98 shadow-md">
+                            <div class="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl font-bold flex-shrink-0 shadow">
+                                <i class="fa-solid fa-lungs"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-black text-rose-950">9. 插管使用呼吸器</div>
+                                <div class="text-[11px] text-rose-700 font-bold">【重症急救】嚴重 ARDS / 呼吸衰竭 / 昏迷 (GCS ≤ 8) / 呼吸驟停</div>
+                            </div>
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Modal -->
+        <div id="feedback-modal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+            <div id="feedback-card" class="max-w-xl w-full bg-white border-2 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                <div class="flex items-center gap-3 mb-3">
+                    <div id="feedback-icon-box" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-bold">
+                        <i id="feedback-icon" class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <h3 id="feedback-title" class="text-xl font-black text-slate-800">急救處置成功！</h3>
+                        <p id="feedback-subtitle" class="text-xs text-slate-500">臨床處置完全符合救治指引</p>
+                    </div>
+                </div>
+
+                <div id="feedback-body" class="bg-rose-50/80 rounded-2xl p-4 text-xs text-slate-700 border border-rose-100 leading-relaxed mb-5"></div>
+
+                <button onclick="game.closeFeedback()" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-base rounded-2xl shadow-md transition active:scale-95">
+                    繼續巡視 (Next Bed)
+                </button>
+            </div>
+        </div>
+
+        <!-- RT Handbook Drawer -->
+        <div id="handbook-modal" class="absolute inset-y-0 right-0 w-full sm:w-[500px] bg-white/95 backdrop-blur border-l-2 border-rose-300 z-50 transform translate-x-full transition-transform duration-300 p-5 flex flex-col justify-between shadow-xl">
+            <div>
+                <div class="flex justify-between items-center pb-3 border-b border-rose-100">
+                    <h2 class="text-lg font-black text-rose-900 flex items-center gap-2">
+                        <i class="fa-solid fa-book-medical"></i> RT 指引手冊
+                    </h2>
+                    <button onclick="document.getElementById('handbook-modal').classList.add('translate-x-full')" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="mt-4 space-y-3 overflow-y-auto max-h-[78vh] pr-1 text-xs text-slate-700">
+                    <div class="bg-rose-50 p-3 rounded-2xl border border-rose-200">
+                        <div class="font-bold text-rose-900 text-sm mb-1"><i class="fa-solid fa-lungs mr-1"></i> 插管使用呼吸器</div>
+                        <p class="text-slate-700 mb-1">● 適應症：嚴重 ARDS、呼吸肌耗竭衰竭、意識不清 (GCS ≤ 8)、呼吸驟停。</p>
+                        <p class="text-slate-600">● 關鍵處置：立刻進行氣管內插管，接上<b>侵襲性正壓呼吸器 (Mechanical Ventilator)</b>。</p>
+                    </div>
+
+                    <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
+                        <div class="font-bold text-emerald-900 text-sm mb-1"><i class="fa-solid fa-wind mr-1"></i> HFNC 高流量鼻導管</div>
+                        <p class="text-slate-700 mb-1">● 適應症：急性嚴重低血氧呼吸衰竭 (NRM 無效)，但尚未達立即插管標準。</p>
+                        <p class="text-slate-600">● 特點：提供最高 60 L/min 溫濕化高流速，精準 FiO2 並產生微量 PEEP 效應！</p>
+                    </div>
+
+                    <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                        <div class="font-bold text-amber-900 text-sm mb-1"><i class="fa-solid fa-pills mr-1"></i> Stridor 與 Wheezing 藥物選擇</div>
+                        <p class="text-slate-700 mb-1">● 吸氣 Stridor (喉鳴音)：拔管後上呼吸道水腫，首選 <b>Bosmin 霧化吸入</b>。</p>
+                        <p class="text-slate-600">● 呼氣 Wheezing (喘鳴音)：氣喘/COPD 支氣管痙攣，首選 <b>支氣管擴張劑 (Combivent)</b>。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-[11px] text-slate-400 border-t border-rose-100 pt-2">
+                RT快來 - 呼吸治療臨床決策系統
+            </div>
+        </div>
+
+        <!-- Shop Drawer -->
+        <div id="shop-modal" class="absolute inset-y-0 right-0 w-full sm:w-96 bg-white/95 backdrop-blur border-l-2 border-amber-200 z-50 transform translate-x-full transition-transform duration-300 p-5 flex flex-col justify-between shadow-xl">
+            <div>
+                <div class="flex justify-between items-center pb-3 border-b border-amber-100">
+                    <h2 class="text-lg font-black text-amber-600 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-shopping"></i> 裝備補給站
+                    </h2>
+                    <button onclick="document.getElementById('shop-modal').classList.add('translate-x-full')" class="w-8 h-8 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="mt-4 space-y-3 overflow-y-auto max-h-[75vh] pr-1">
+                    <div class="bg-amber-50/60 border border-amber-200 rounded-2xl p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-rose-900 flex items-center gap-1.5 text-xs">
+                                <i class="fa-solid fa-shoe-prints"></i> RT 衝刺鞋 (移動速度)
+                            </div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">提升跑動速度 (Lv. <span id="lvl-speed">1</span>)</div>
+                            <div class="text-xs text-amber-600 font-mono mt-1" id="cost-speed">50 金幣</div>
+                        </div>
+                        <button onclick="game.buyUpgrade('speed')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition active:scale-95 shadow">升級</button>
+                    </div>
+
+                    <div class="bg-amber-50/60 border border-amber-200 rounded-2xl p-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-emerald-800 flex items-center gap-1.5 text-xs">
+                                <i class="fa-solid fa-stethoscopes"></i> 監控警示儀 (病患耐受度)
+                            </div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">延長病患血氧惡化時間 (Lv. <span id="lvl-patience">1</span>)</div>
+                            <div class="text-xs text-amber-600 font-mono mt-1" id="cost-patience">80 金幣</div>
+                        </div>
+                        <button onclick="game.buyUpgrade('patience')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition active:scale-95 shadow">升級</button>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-xs text-slate-400 border-t border-amber-100 pt-2">
+                急救成功獲得績效金幣！
+            </div>
+        </div>
+
+        <!-- Start Modal -->
+        <div id="start-modal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-50">
+            <div class="max-w-md w-full bg-white border-2 border-rose-400 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden text-slate-700">
+                <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 border border-rose-300 shadow">
+                    <i class="fa-solid fa-hospital-user"></i>
+                </div>
+                <h1 class="text-3xl font-black text-rose-950 tracking-wide mb-1">RT快來</h1>
+                <p class="text-xs text-rose-600 font-bold uppercase tracking-wider mb-4">Respiratory Therapist Simulator</p>
+                <div class="text-slate-600 text-xs sm:text-sm mb-5 leading-relaxed text-left bg-rose-50 p-3.5 rounded-2xl border border-rose-100 space-y-1.5">
+                    <p>🩵 <b>急診 10 床重症區</b>：正確處置「插管使用呼吸器」、「HFNC 高流量鼻導管」與霧化急救。</p>
+                    <p>🩸 <b>臨床評估</b>：判斷嚴重 ARDS、喘鳴音 (Wheezing)、喉鳴音 (Stridor)。</p>
+                    <p>🩺 <b>像素 RT & 走動護理師</b>：天空藍刷手服配戴聽診器與識別證。</p>
+                    <p>⏱️ <b>3分鐘穩定冷卻</b>：處置正確後，病人生理穩定維持 180 秒。</p>
+                </div>
+
+                <button id="start-game-btn" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-lg rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 active:translate-y-0">
+                    <i class="fa-solid fa-truck-medical mr-2"></i> 開始巡視
+                </button>
+            </div>
+        </div>
+
+        <!-- End Modal -->
+        <div id="end-modal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-50 hidden">
+            <div id="end-card" class="max-w-md w-full bg-white border-2 rounded-3xl p-6 sm:p-8 shadow-2xl border-rose-300 text-slate-700">
+                <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-4 bg-rose-100 text-rose-600 border border-rose-300 shadow">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-2xl font-black mb-1 text-slate-800">班別結束！</h2>
+                <p class="text-slate-500 text-xs mb-5">急診 10 床呼吸急救績效結算</p>
+
+                <div class="bg-rose-50 rounded-2xl p-4 text-slate-700 text-xs space-y-2.5 mb-6 border border-rose-100 text-left">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">急救成功病患數:</span>
+                        <span id="stat-patients" class="font-mono font-bold text-emerald-600 text-sm">0 人</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">急救處置正確率:</span>
+                        <span id="stat-accuracy" class="font-mono font-bold text-rose-600 text-sm">100%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">獲得績效金幣:</span>
+                        <span id="stat-coins" class="font-mono font-bold text-amber-500 text-sm">0</span>
+                    </div>
+                </div>
+
+                <button id="restart-btn" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-lg rounded-2xl shadow-lg transition active:scale-95">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> 開始下一班次
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobile-controls" class="absolute inset-0 pointer-events-none z-20 sm:hidden">
+            <div id="joystick-base" class="absolute bottom-6 left-6 w-32 h-32 bg-white/80 rounded-full border-2 border-rose-300 flex items-center justify-center pointer-events-auto touch-none shadow-lg backdrop-blur">
+                <div id="joystick-thumb" class="w-12 h-12 bg-rose-600 rounded-full border-2 border-white shadow"></div>
+            </div>
+            <button id="mobile-interact-btn" class="absolute bottom-8 right-8 w-20 h-20 bg-rose-600 border-4 border-rose-200 text-white rounded-full flex flex-col items-center justify-center font-bold text-xs active:bg-rose-500 active:scale-90 transition pointer-events-auto shadow-lg">
+                <i class="fa-solid fa-stethoscope text-xl mb-0.5"></i>
+                <span>評估</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        class MedicalAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.breathOsc1 = null;
+                this.breathOsc2 = null;
+                this.breathGain = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            // IEC Standard 5-pulse high priority alarm chime
+            playICUMonitorAlarm() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const freqs = [1046.50, 1046.50, 1046.50, 783.99, 659.25];
+                const timings = [0, 0.15, 0.30, 0.55, 0.70];
+
+                timings.forEach((delay, idx) => {
+                    try {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freqs[idx], now + delay);
+
+                        gain.gain.setValueAtTime(0.12, now + delay);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + delay);
+                        osc.stop(now + delay + 0.12);
+                    } catch(e) {}
+                });
+            }
+
+            playWheezingSound() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    this.stopBreathSound();
+                    this.breathOsc1 = this.ctx.createOscillator();
+                    this.breathOsc2 = this.ctx.createOscillator();
+                    this.breathGain = this.ctx.createGain();
+
+                    this.breathOsc1.type = 'sine';
+                    this.breathOsc2.type = 'triangle';
+
+                    this.breathOsc1.frequency.setValueAtTime(650, this.ctx.currentTime);
+                    this.breathOsc1.frequency.linearRampToValueAtTime(780, this.ctx.currentTime + 1.2);
+                    this.breathOsc2.frequency.setValueAtTime(1280, this.ctx.currentTime);
+
+                    this.breathGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                    this.breathGain.gain.linearRampToValueAtTime(0.07, this.ctx.currentTime + 0.5);
+                    this.breathGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 2.2);
+
+                    this.breathOsc1.connect(this.breathGain);
+                    this.breathOsc2.connect(this.breathGain);
+                    this.breathGain.connect(this.ctx.destination);
+
+                    this.breathOsc1.start();
+                    this.breathOsc2.start();
+                    this.breathOsc1.stop(this.ctx.currentTime + 2.2);
+                    this.breathOsc2.stop(this.ctx.currentTime + 2.2);
+                } catch(e) {}
+            }
+
+            playStridorSound() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    this.stopBreathSound();
+                    this.breathOsc1 = this.ctx.createOscillator();
+                    this.breathOsc2 = this.ctx.createOscillator();
+                    this.breathGain = this.ctx.createGain();
+
+                    this.breathOsc1.type = 'sawtooth';
+                    this.breathOsc2.type = 'square';
+
+                    this.breathOsc1.frequency.setValueAtTime(420, this.ctx.currentTime);
+                    this.breathOsc1.frequency.linearRampToValueAtTime(540, this.ctx.currentTime + 0.8);
+                    this.breathOsc2.frequency.setValueAtTime(840, this.ctx.currentTime);
+
+                    this.breathGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                    this.breathGain.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime + 0.3);
+                    this.breathGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 2.0);
+
+                    this.breathOsc1.connect(this.breathGain);
+                    this.breathOsc2.connect(this.breathGain);
+                    this.breathGain.connect(this.ctx.destination);
+
+                    this.breathOsc1.start();
+                    this.breathOsc2.start();
+                    this.breathOsc1.stop(this.ctx.currentTime + 2.0);
+                    this.breathOsc2.stop(this.ctx.currentTime + 2.0);
+                } catch(e) {}
+            }
+
+            stopBreathSound() {
+                try {
+                    if (this.breathOsc1) this.breathOsc1.stop();
+                    if (this.breathOsc2) this.breathOsc2.stop();
+                } catch(e) {}
+            }
+
+            playSuccessChime() {
+                if (this.muted || !this.ctx) return;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => {
+                        try {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                            gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+                            osc.connect(gain);
+                            gain.connect(this.ctx.destination);
+                            osc.start();
+                            osc.stop(this.ctx.currentTime + 0.2);
+                        } catch(e) {}
+                    }, idx * 80);
+                });
+            }
+
+            playErrorSound() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(110, this.ctx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.25);
+                } catch(e) {}
+            }
+
+            playO2Hiss() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const bufferSize = this.ctx.sampleRate * 0.3;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = Math.random() * 2 - 1;
+                    }
+                    const whiteNoise = this.ctx.createBufferSource();
+                    whiteNoise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 1600;
+
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+
+                    whiteNoise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    whiteNoise.start();
+                } catch(e) {}
+            }
+        }
+
+        const audio = new MedicalAudioEngine();
+
+        const PATIENT_CASES = [
+            {
+                id: 'intubation_ards',
+                name: '張先生',
+                age: 52,
+                gender: '男',
+                diagnosis: '重度 ARDS 併急性呼吸衰竭 (GCS 7)',
+                abg: 'PaO2: 42 mmHg (NRM 100%), PaCO2: 68, pH: 7.15',
+                spo2: 68,
+                rr: 38,
+                breathSound: 'Coarse crackle (粗濕囉音)',
+                requiredMedication: 'none',
+                correctDevice: 'ventilator',
+                title: '重度 ARDS 併意識昏迷：必須「插管使用呼吸器」',
+                explanation: '<b>臨床理由：</b>患者為重度 ARDS，使用 NRM 100% 下 PaO2 仍僅 42 mmHg，且併發意識障礙 (GCS 7) 與嚴重高碳酸酸血症。<br><br>屬於<b>絕對適應症：必須立刻進行氣管內插管，並「插管使用呼吸器」</b>以設定 PEEP 與潮氣量進行保護性肺通氣！'
+            },
+            {
+                id: 'hfnc_hypoxemia',
+                name: '李太太',
+                age: 64,
+                gender: '女',
+                diagnosis: '嚴重肺炎併嚴重缺氧性呼吸衰竭',
+                abg: 'PaO2: 52 mmHg (NRM 15L/min), PaCO2: 36',
+                spo2: 81,
+                rr: 32,
+                breathSound: 'Coarse crackle (粗濕囉音)',
+                requiredMedication: 'none',
+                correctDevice: 'hfnc',
+                title: '急性低血氧無效：首選「HFNC 高流量鼻導管」',
+                explanation: '<b>臨床理由：</b>患者為急性缺氧性呼吸衰竭，使用 NRM 15 L/min 仍無法拉高血氧，但意識清醒。<br><br>此時首選<b>「HFNC 高流量鼻導管」(流速 30-60 L/min)</b>，提供溫濕化高濃度氧氣並產生微量 PEEP 沖洗死腔！'
+            },
+            {
+                id: 'stridor_post_extubation',
+                name: '陳小姐',
+                age: 34,
+                gender: '女',
+                diagnosis: '拔管後上呼吸道水腫 / 聲門下水腫',
+                abg: 'PaO2: 62 mmHg, 吸氣高亢 Stridor',
+                spo2: 83,
+                rr: 30,
+                breathSound: 'Stridor (喉鳴音)',
+                requiredMedication: 'bosmin',
+                correctDevice: 'aerosol_mask',
+                title: '拔管後喉頭水腫：首選 Aerosol Mask ＋ Bosmin 霧化吸入',
+                explanation: '<b>臨床理由：</b>聽診得吸氣高亢 **Stridor (喉鳴音)**，為拔管後聲門下水腫所致。<br><br>應立即給予 <b>Bosmin (Epinephrine) 霧化吸入</b> 收縮黏膜血管減輕水腫，並搭配 <b>Aerosol Mask (潮濕面罩)</b> 提供水氣！'
+            },
+            {
+                id: 'asthma_attack',
+                name: '王先生',
+                age: 29,
+                gender: '男',
+                diagnosis: '急性氣喘重度發作 (Acute Asthma Attack)',
+                abg: 'PaO2: 56 mmHg, 氣道阻力極高',
+                spo2: 82,
+                rr: 34,
+                breathSound: 'Wheezing (喘鳴音)',
+                requiredMedication: 'bronchodilator',
+                correctDevice: 'nrm',
+                title: '急性氣喘發作：選用 NRM 高濃度氧氣 ＋ 支氣管擴張劑 (Combivent)',
+                explanation: '<b>臨床理由：</b>氣喘重度發作聽診為 **Wheezing (喘鳴音)**。<br><br>應使用 **NRM (非再吸入面罩)** 改善嚴重缺氧，同時<b>必須給予「支氣管擴張劑 (Combivent/Ventolin)」霧化吸入</b>解除支氣管痙攣！'
+            },
+            {
+                id: 'copd_exacerbation',
+                name: '劉爺爺',
+                age: 74,
+                gender: '男',
+                diagnosis: 'COPD 急性發作併高碳酸血症',
+                abg: 'PaCO2: 66 mmHg, pH: 7.27',
+                spo2: 83,
+                rr: 26,
+                breathSound: 'Wheezing (喘鳴音)',
+                requiredMedication: 'bronchodilator',
+                correctDevice: 'venturi_mask',
+                title: 'COPD 急性發作：首選「凡吐利面罩」＋ 支氣管擴張劑',
+                explanation: '<b>臨床理由：</b>COPD 慢性二氧化碳滯留患者需避免高濃度氧氣抑止缺氧驅動 (Hypoxic Drive)。首選<b>凡吐利面罩 (Venturi Mask)</b> 精準控制 FiO2 (28%)，並配合<b>支氣管擴張劑</b>吸入！'
+            },
+            {
+                id: 'tracheostomy_care',
+                name: '黃先生',
+                age: 62,
+                gender: '男',
+                diagnosis: '氣切切開術後氣道乾燥 / 分泌物黏稠',
+                abg: '氣道分泌物結痂，缺乏上呼吸道濕化',
+                spo2: 88,
+                rr: 22,
+                breathSound: 'Coarse crackle (粗濕囉音)',
+                requiredMedication: 'none',
+                correctDevice: 'tracheal_mask',
+                title: '氣切造口照顧：選用「Tracheal mask (氣切面罩)」',
+                explanation: '<b>臨床理由：</b>氣切患者喪失鼻腔加溫加濕能力，且聽診常得 <b>Coarse crackle (粗濕囉音)</b>。使用 <b>Tracheal mask (氣切面罩)</b> 給予充足水霧，防止痰液乾涸堵塞氣切管！'
+            },
+            {
+                id: 'acute_pulmonary_edema',
+                name: '趙爺爺',
+                age: 82,
+                gender: '男',
+                diagnosis: '急性心因性肺水腫 (Acute Pulmonary Edema)',
+                abg: 'PaCO2: 54 mmHg, 雙肺大量濕囉音',
+                spo2: 76,
+                rr: 36,
+                breathSound: 'Coarse crackle (粗濕囉音)',
+                requiredMedication: 'none',
+                correctDevice: 'bipap',
+                title: '急性肺水腫：首選「非侵襲性正壓 (BiPAP / CPAP)」',
+                explanation: '<b>臨床理由：</b>肺水腫聽診呈 <b>Coarse crackle (粗濕囉音)</b>。BiPAP 的 PEEP 能將肺泡積液壓回血管，大幅減輕心臟後負擔與呼吸肌疲勞！'
+            }
+        ];
+
+        class PixelArtRendererER {
+            static drawPixelMatrix(ctx, matrix, colorPalette, startX, startY, pSize = 5) {
+                for (let r = 0; r < matrix.length; r++) {
+                    for (let c = 0; c < matrix[r].length; c++) {
+                        const colorKey = matrix[r][c];
+                        if (colorKey && colorPalette[colorKey]) {
+                            ctx.fillStyle = colorPalette[colorKey];
+                            ctx.fillRect(startX + c * pSize, startY + r * pSize, pSize, pSize);
+                        }
+                    }
+                }
+            }
+
+            // ER Triage Station
+            static drawERTriageStation(ctx, x, y) {
+                ctx.save();
+                ctx.translate(x, y);
+
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillRect(0, 0, 360, 80);
+                ctx.fillStyle = '#fff1f2';
+                ctx.fillRect(10, 10, 340, 60);
+
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(30, -25, 70, 35);
+                ctx.fillRect(145, -25, 70, 35);
+                ctx.fillRect(260, -25, 70, 35);
+
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(32, -23, 66, 31);
+                ctx.strokeRect(147, -23, 66, 31);
+                ctx.strokeRect(262, -23, 66, 31);
+
+                ctx.fillStyle = '#f43f5e';
+                ctx.fillRect(110, 20, 20, 14);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(230, 15, 12, 22);
+
+                ctx.restore();
+            }
+
+            // ULTRA DETAILED RT SPRITE: Light Blue Scrubs, Draped Stethoscope, Pinned ID Badge
+            static drawRTPlayer(ctx, x, y, animFrame, isMoving) {
+                const p = 5;
+                const legOffset = isMoving ? (animFrame % 2 === 0 ? -2 : 2) : 0;
+                const armOffset = isMoving ? (animFrame % 2 === 0 ? 2 : -2) : 0;
+
+                ctx.save();
+                ctx.translate(x - 30, y - 50);
+
+                const pal = {
+                    H: '#334155', // Hair
+                    F: '#fed7aa', // Skin Tone
+                    E: '#1e293b', // Eyes
+                    M: '#f43f5e', // Lips
+                    S: '#38bdf8', // Light Blue Scrubs
+                    D: '#0284c7', // Dark Blue Pants
+                    W: '#ffffff', // ID Badge / Shoes
+                    T: '#ef4444', // Red Stethoscope Tube
+                    L: '#94a3b8', // Silver Bell
+                    I: '#f59e0b'  // Gold ID Clip
+                };
+
+                const head = [
+                    ['','H','H','H','H','H','H','H',''],
+                    ['H','H','H','H','H','H','H','H','H'],
+                    ['H','F','F','F','F','F','F','F','H'],
+                    ['H','F','E','F','F','E','F','F',''],
+                    ['','F','F','F','F','F','F','F',''],
+                    ['','F','F','M','M','F','F','','']
+                ];
+                this.drawPixelMatrix(ctx, head, pal, 2 * p, 0, p);
+
+                const body = [
+                    ['','S','T','T','T','T','T','S',''],
+                    ['T','S','T','L','T','I','W','S',''],
+                    ['T','S','S','S','S','W','W','S',''],
+                    ['','S','S','S','S','S','S','S',''],
+                    ['','D','D','D','D','D','D','D','']
+                ];
+                this.drawPixelMatrix(ctx, body, pal, 1 * p, 6 * p, p);
+
+                ctx.fillStyle = pal.F;
+                ctx.fillRect(0, (7 + armOffset) * p, 2 * p, 6 * p);
+                ctx.fillRect(11 * p, (7 - armOffset) * p, 2 * p, 6 * p);
+
+                ctx.fillStyle = pal.D;
+                ctx.fillRect(2 * p, 11 * p, 3 * p, 6 * p);
+                ctx.fillRect(7 * p, 11 * p, 3 * p, 6 * p);
+
+                ctx.fillStyle = pal.W;
+                ctx.fillRect((2 + legOffset) * p, 17 * p, 3 * p, 2.5 * p);
+                ctx.fillRect((7 - legOffset) * p, 17 * p, 3 * p, 2.5 * p);
+
+                ctx.restore();
+            }
+
+            // DETAILED ER NURSE SPRITE: Crimson Red Scrubs (紅色刷手服)
+            static drawNurseNPC(ctx, nurse, animFrame) {
+                const p = 5;
+                const legOffset = nurse.isMoving ? (animFrame % 2 === 0 ? -2 : 2) : 0;
+
+                ctx.save();
+                ctx.translate(nurse.x - 25, nurse.y - 45);
+
+                const pal = {
+                    H: '#78350f', // Hair
+                    F: '#fde68a', // Skin
+                    E: '#1e293b', // Eyes
+                    R: '#dc2626', // Crimson Red Scrubs
+                    D: '#991b1b', // Dark Red Pants
+                    W: '#ffffff'  // Cap / Shoes
+                };
+
+                ctx.fillStyle = pal.W;
+                ctx.fillRect(3 * p, 0, 5 * p, 2 * p);
+                ctx.fillStyle = pal.R;
+                ctx.fillRect(5 * p, 2, 4, 4);
+
+                ctx.fillStyle = pal.F;
+                ctx.fillRect(2 * p, 2 * p, 7 * p, 4 * p);
+                ctx.fillStyle = pal.E;
+                ctx.fillRect(4 * p, 3 * p, 1.5 * p, 1.5 * p);
+                ctx.fillRect(7 * p, 3 * p, 1.5 * p, 1.5 * p);
+
+                ctx.fillStyle = pal.R;
+                ctx.fillRect(1 * p, 6 * p, 9 * p, 5 * p);
+
+                ctx.fillStyle = pal.W;
+                ctx.fillRect(8 * p, 7 * p, 3 * p, 4 * p);
+
+                ctx.fillStyle = pal.D;
+                ctx.fillRect((2 + legOffset) * p, 11 * p, 2.5 * p, 6 * p);
+                ctx.fillRect((6 - legOffset) * p, 11 * p, 2.5 * p, 6 * p);
+
+                if (nurse.isChecking) {
+                    ctx.fillStyle = '#dc2626';
+                    ctx.font = 'bold 12px "Noto Sans TC"';
+                    ctx.fillText('📋 巡視中', -10, -8);
+                }
+
+                ctx.restore();
+            }
+
+            // ER Resuscitation Bed Station
+            static drawERBedStation(ctx, bed, animFrame) {
+                const x = bed.x;
+                const y = bed.y;
+
+                ctx.save();
+                ctx.translate(x - 85, y - 60);
+
+                // Red Emergency Headwall Outlets
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-10, -35, 190, 150);
+
+                ctx.fillStyle = '#fca5a5';
+                ctx.fillRect(0, -20, 170, 20);
+                
+                ctx.fillStyle = '#22c55e'; // Green O2
+                ctx.fillRect(20, -16, 12, 12);
+                ctx.fillStyle = '#eab308'; // Vacuum
+                ctx.fillRect(40, -16, 12, 12);
+
+                ctx.fillStyle = '#3b82f6'; // Compressed Air
+                ctx.fillRect(60, -16, 12, 12);
+
+                // Bedframe
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+                ctx.fillRect(6, 35, 158, 80);
+
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(0, 0, 170, 110);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(8, 8, 154, 94);
+
+                ctx.fillStyle = '#fee2e2';
+                ctx.fillRect(12, 12, 32, 86);
+
+                if (bed.patient) {
+                    const isStabilized = bed.patient.isStabilized;
+                    const isCyanotic = bed.patient.currentSpO2 < 85 && !isStabilized;
+                    const skinColor = isCyanotic ? '#a5f3fc' : '#fde047';
+                    const breathY = (bed.patient.alarm && animFrame % 2 === 0) ? -3 : 0;
+
+                    ctx.fillStyle = skinColor;
+                    ctx.fillRect(20, 34, 22, 28);
+
+                    ctx.fillStyle = '#475569';
+                    ctx.fillRect(14, 28, 28, 12);
+
+                    if (isCyanotic || bed.patient.alarm) {
+                        ctx.strokeStyle = '#0f172a';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(32, 40); ctx.lineTo(36, 44);
+                        ctx.moveTo(36, 40); ctx.lineTo(32, 44);
+                        ctx.stroke();
+
+                        ctx.fillStyle = '#991b1b';
+                        ctx.fillRect(32, 52, 6, 5);
+                    } else {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(32, 40, 4, 3);
+                        ctx.fillRect(32, 50, 4, 3);
+                        ctx.fillStyle = '#475569';
+                        ctx.fillRect(38, 46, 2, 4);
+                    }
+
+                    ctx.fillStyle = isStabilized ? '#10b981' : '#dc2626';
+                    ctx.fillRect(42, 12 + breathY, 112, 86);
+
+                    // Attached Equipment Overlay
+                    const eq = bed.attachedEquipment;
+                    if (eq) {
+                        if (eq === 'nasal_cannula') {
+                            ctx.fillStyle = '#10b981';
+                            ctx.fillRect(26, 38, 16, 3);
+                            ctx.fillRect(34, 32, 3, 16);
+                        } else if (eq === 'simple_mask') {
+                            ctx.fillStyle = 'rgba(14, 165, 233, 0.75)';
+                            ctx.fillRect(28, 38, 14, 16);
+                        } else if (eq === 'venturi_mask') {
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                            ctx.fillRect(28, 38, 14, 16);
+                            ctx.fillStyle = '#f97316';
+                            ctx.fillRect(40, 44, 10, 5);
+                        } else if (eq === 'nrm') {
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                            ctx.fillRect(28, 38, 14, 16);
+                            ctx.fillStyle = '#0284c7';
+                            ctx.beginPath();
+                            ctx.ellipse(44, 64, 10, 16, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (eq === 'aerosol_mask') {
+                            ctx.fillStyle = 'rgba(20, 184, 166, 0.75)';
+                            ctx.fillRect(28, 38, 14, 16);
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                            for (let m = 0; m < 5; m++) {
+                                const mx = 44 + Math.sin(animFrame + m) * 6;
+                                const my = 36 - m * 5;
+                                ctx.fillRect(mx, my, 4, 4);
+                            }
+                        } else if (eq === 'tracheal_mask') {
+                            ctx.fillStyle = '#a855f7';
+                            ctx.fillRect(36, 28, 6, 32);
+                        } else if (eq === 'hfnc') {
+                            ctx.fillStyle = '#059669';
+                            ctx.fillRect(26, 36, 16, 5);
+                            ctx.fillStyle = '#34d399';
+                            ctx.fillRect(38, 32, 40, 5);
+                        } else if (eq === 'bipap') {
+                            ctx.fillStyle = '#06b6d4';
+                            ctx.fillRect(26, 34, 18, 22);
+                        } else if (eq === 'ventilator') {
+                            ctx.fillStyle = '#f43f5e';
+                            ctx.fillRect(32, 46, 16, 4);
+                            ctx.fillStyle = '#0284c7';
+                            ctx.fillRect(44, 48, 42, 6);
+                        }
+
+                        if (bed.attachedMedication === 'bosmin') {
+                            ctx.fillStyle = '#f43f5e';
+                            ctx.fillRect(40, 54, 8, 10);
+                        } else if (bed.attachedMedication === 'bronchodilator') {
+                            ctx.fillStyle = '#f59e0b';
+                            ctx.fillRect(40, 54, 8, 10);
+                        }
+                    }
+                }
+
+                ctx.restore();
+
+                // Multi-parameter Bedside Monitor
+                this.drawERMonitor(ctx, bed.x + 90, bed.y - 40, bed.patient, animFrame);
+            }
+
+            static drawERMonitor(ctx, x, y, patient, animFrame) {
+                ctx.save();
+                ctx.translate(x, y);
+
+                const isStabilized = patient && patient.isStabilized;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 56, 74);
+                ctx.strokeStyle = isStabilized ? '#10b981' : (patient && patient.alarm ? '#dc2626' : '#e11d48');
+                ctx.lineWidth = 3;
+                ctx.strokeRect(0, 0, 56, 74);
+
+                if (patient && patient.alarm && !isStabilized) {
+                    ctx.fillStyle = animFrame % 2 === 0 ? '#dc2626' : '#f87171';
+                    ctx.fillRect(20, -12, 16, 12);
+                    ctx.fillStyle = '#fee2e2';
+                    ctx.fillRect(24, -10, 8, 8);
+                }
+
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(4, 4, 48, 30);
+
+                ctx.strokeStyle = isStabilized ? '#10b981' : (patient && patient.alarm ? '#dc2626' : '#22c55e');
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                const step = (animFrame * 4) % 48;
+                for (let i = 0; i < 48; i += 3) {
+                    let py = 19;
+                    if ((i + step) % 18 === 0) py = 9;
+                    else if ((i + step) % 18 === 6) py = 27;
+                    ctx.lineTo(4 + i, py);
+                }
+                ctx.stroke();
+
+                if (patient) {
+                    if (isStabilized) {
+                        ctx.fillStyle = '#10b981';
+                        ctx.font = 'bold 9px monospace';
+                        ctx.fillText('STABLE', 6, 48);
+                        const mins = Math.floor(patient.stabilizedTimer / 60);
+                        const secs = patient.stabilizedTimer % 60;
+                        ctx.font = 'bold 10px monospace';
+                        ctx.fillText(`${mins}:${secs.toString().padStart(2, '0')}`, 8, 62);
+                    } else {
+                        ctx.fillStyle = patient.alarm ? '#dc2626' : '#0284c7';
+                        ctx.font = 'bold 12px monospace';
+                        ctx.fillText(`${Math.floor(patient.currentSpO2)}%`, 6, 54);
+                    }
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class RTGameEngine {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+
+                this.running = false;
+                this.shiftTimeLeft = 180;
+                this.score = 0;
+                this.coins = 0;
+                this.totalEvaluated = 0;
+                this.correctAnswers = 0;
+
+                this.animFrame = 0;
+                this.lastAnimTime = Date.now();
+
+                this.player = {
+                    x: 700,
+                    y: 400,
+                    radius: 24,
+                    speed: 5.5,
+                    isMoving: false
+                };
+
+                // AI ER Nurses Wandering Loop
+                this.nurses = [
+                    { x: 300, y: 390, targetX: 300, targetY: 390, speed: 1.5, isChecking: false, timer: 0, isMoving: false },
+                    { x: 1100, y: 430, targetX: 1100, targetY: 430, speed: 1.4, isChecking: false, timer: 0, isMoving: false }
+                ];
+
+                this.upgrades = {
+                    speedLvl: 1,
+                    patienceLvl: 1
+                };
+
+                this.beds = [];
+                this.activePatient = null;
+                this.nearestBed = null;
+
+                this.keys = {};
+                this.joystickVector = { x: 0, y: 0 };
+
+                this.initCanvas();
+                this.init10ERBeds();
+                this.bindEvents();
+            }
+
+            initCanvas() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+            }
+
+            init10ERBeds() {
+                this.beds = [
+                    { id: 1, name: '急診 1床', x: 200, y: 200, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 2, name: '急診 2床', x: 450, y: 200, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 3, name: '急診 3床', x: 700, y: 200, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 4, name: '急診 4床', x: 950, y: 200, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 5, name: '急診 10床', x: 1200, y: 200, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+
+                    { id: 6, name: '急診 6床', x: 200, y: 600, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 7, name: '急診 7床', x: 450, y: 600, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 8, name: '急診 8床', x: 700, y: 600, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 9, name: '急診 9床', x: 950, y: 600, patient: null, attachedEquipment: null, attachedMedication: 'none' },
+                    { id: 10, name: '急診 5床', x: 1200, y: 600, patient: null, attachedEquipment: null, attachedMedication: 'none' }
+                ];
+            }
+
+            bindEvents() {
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    if (e.code === 'Space' || e.key.toLowerCase() === 'e') {
+                        e.preventDefault();
+                        this.interactWithBed();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+
+                const joystickBase = document.getElementById('joystick-base');
+                const joystickThumb = document.getElementById('joystick-thumb');
+                const interactBtn = document.getElementById('mobile-interact-btn');
+
+                let touchId = null;
+                const maxRadius = 40;
+
+                const handleTouchMove = (e) => {
+                    for (let i = 0; i < e.touches.length; i++) {
+                        const touch = e.touches[i];
+                        if (touch.identifier === touchId) {
+                            const rect = joystickBase.getBoundingClientRect();
+                            const centerX = rect.left + rect.width / 2;
+                            const centerY = rect.top + rect.height / 2;
+
+                            let dx = touch.clientX - centerX;
+                            let dy = touch.clientY - centerY;
+                            const dist = Math.hypot(dx, dy);
+
+                            if (dist > maxRadius) {
+                                dx = (dx / dist) * maxRadius;
+                                dy = (dy / dist) * maxRadius;
+                            }
+
+                            joystickThumb.style.transform = `translate(${dx}px, ${dy}px)`;
+                            this.joystickVector = { x: dx / maxRadius, y: dy / maxRadius };
+                        }
+                    }
+                };
+
+                joystickBase.addEventListener('touchstart', (e) => {
+                    if (touchId === null) {
+                        touchId = e.changedTouches[0].identifier;
+                        handleTouchMove(e);
+                    }
+                });
+
+                window.addEventListener('touchmove', handleTouchMove);
+
+                const handleTouchEnd = (e) => {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        if (e.changedTouches[i].identifier === touchId) {
+                            touchId = null;
+                            joystickThumb.style.transform = `translate(0px, 0px)`;
+                            this.joystickVector = { x: 0, y: 0 };
+                        }
+                    }
+                };
+
+                window.addEventListener('touchend', handleTouchEnd);
+                window.addEventListener('touchcancel', handleTouchEnd);
+
+                interactBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.interactWithBed();
+                });
+
+                document.getElementById('handbook-toggle-btn').addEventListener('click', () => {
+                    document.getElementById('handbook-modal').classList.remove('translate-x-full');
+                });
+                document.getElementById('shop-toggle-btn').addEventListener('click', () => {
+                    document.getElementById('shop-modal').classList.remove('translate-x-full');
+                });
+                document.getElementById('audio-btn').addEventListener('click', () => {
+                    audio.init();
+                    audio.muted = !audio.muted;
+                    document.getElementById('audio-icon').className = audio.muted ? 'fa-solid fa-volume-xmark text-rose-500' : 'fa-solid fa-volume-high text-rose-600';
+                });
+
+                document.getElementById('start-game-btn').addEventListener('click', () => {
+                    audio.init();
+                    document.getElementById('start-modal').classList.add('hidden');
+                    this.start();
+                });
+
+                document.getElementById('restart-btn').addEventListener('click', () => {
+                    document.getElementById('end-modal').classList.add('hidden');
+                    this.start();
+                });
+            }
+
+            start() {
+                this.running = true;
+                this.shiftTimeLeft = 180;
+                this.score = 0;
+                this.coins = 0;
+                this.totalEvaluated = 0;
+                this.correctAnswers = 0;
+
+                this.player.x = 700;
+                this.player.y = 400;
+
+                this.beds.forEach((bed) => {
+                    this.assignRandomPatient(bed);
+                });
+
+                this.lastTimerUpdate = Date.now();
+                this.updateUI();
+                requestAnimationFrame((ts) => this.gameLoop(ts));
+            }
+
+            assignRandomPatient(bed) {
+                const randomCase = PATIENT_CASES[Math.floor(Math.random() * PATIENT_CASES.length)];
+                bed.patient = {
+                    ...randomCase,
+                    currentSpO2: randomCase.spo2,
+                    timer: 35 + this.upgrades.patienceLvl * 10,
+                    alarm: false,
+                    isStabilized: false,
+                    stabilizedTimer: 0
+                };
+                bed.attachedEquipment = null;
+                bed.attachedMedication = 'none';
+            }
+
+            interactWithBed() {
+                if (!this.running || !this.nearestBed || !this.nearestBed.patient) return;
+
+                if (this.nearestBed.patient.isStabilized) {
+                    const mins = Math.floor(this.nearestBed.patient.stabilizedTimer / 60);
+                    const secs = this.nearestBed.patient.stabilizedTimer % 60;
+                    alert(`🚑 ${this.nearestBed.name} 病患處置成功！生理指數穩定中 (剩餘穩定時間: ${mins}分${secs}秒)`);
+                    return;
+                }
+
+                this.activePatient = this.nearestBed.patient;
+
+                document.getElementById('patient-bed-title').innerText = this.nearestBed.name;
+                document.getElementById('patient-name-info').innerText = this.activePatient.name;
+                document.getElementById('patient-demographics').innerText = `${this.activePatient.age}歲 / ${this.activePatient.gender}`;
+                document.getElementById('patient-diagnosis-label').innerText = `主訴：${this.activePatient.diagnosis}`;
+
+                document.getElementById('assess-spo2').innerText = `${Math.floor(this.activePatient.currentSpO2)}%`;
+                document.getElementById('assess-rr').innerText = `${this.activePatient.rr} 次/分`;
+                document.getElementById('assess-breath').innerText = this.activePatient.breathSound;
+                document.getElementById('assess-abg').innerText = this.activePatient.abg;
+
+                const radios = document.getElementsByName('medication-choice');
+                radios.forEach(r => r.checked = (r.value === 'none'));
+
+                if (this.activePatient.breathSound.includes('Stridor')) {
+                    audio.playStridorSound();
+                } else if (this.activePatient.breathSound.includes('Wheezing')) {
+                    audio.playWheezingSound();
+                }
+
+                document.getElementById('assess-modal').classList.remove('hidden');
+            }
+
+            closeAssessment() {
+                audio.stopBreathSound();
+                document.getElementById('assess-modal').classList.add('hidden');
+            }
+
+            applyTreatment(deviceKey) {
+                if (!this.activePatient) return;
+
+                const selectedMed = document.querySelector('input[name="medication-choice"]:checked')?.value || 'none';
+                this.closeAssessment();
+                this.totalEvaluated++;
+
+                const correctDevice = (deviceKey === this.activePatient.correctDevice);
+                const correctMed = (selectedMed === this.activePatient.requiredMedication);
+                const isCorrect = correctDevice && correctMed;
+
+                this.nearestBed.attachedEquipment = deviceKey;
+                this.nearestBed.attachedMedication = selectedMed;
+
+                const card = document.getElementById('feedback-card');
+                const iconBox = document.getElementById('feedback-icon-box');
+                const icon = document.getElementById('feedback-icon');
+
+                if (isCorrect) {
+                    this.correctAnswers++;
+                    this.score++;
+                    const earnedCoins = 50;
+                    this.coins += earnedCoins;
+
+                    audio.playSuccessChime();
+                    audio.playO2Hiss();
+
+                    // Lock Patient in Stabilized Mode for 3 Minutes (180 seconds)
+                    this.nearestBed.patient.currentSpO2 = 98;
+                    this.nearestBed.patient.alarm = false;
+                    this.nearestBed.patient.isStabilized = true;
+                    this.nearestBed.patient.stabilizedTimer = 180;
+
+                    card.className = 'max-w-xl w-full bg-white border-2 rounded-3xl p-6 shadow-2xl border-emerald-400 text-slate-700';
+                    iconBox.className = 'w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-bold bg-emerald-100 text-emerald-600 border border-emerald-300';
+                    icon.className = 'fa-solid fa-check';
+
+                    document.getElementById('feedback-title').innerText = `處置正確！生理指數維持穩定 3 分鐘 (+${earnedCoins}金幣)`;
+                    document.getElementById('feedback-subtitle').innerText = this.activePatient.title;
+                    document.getElementById('feedback-body').innerHTML = `${this.activePatient.explanation}<br><br><span class="text-emerald-700 font-bold">⏱️ 病人生理監視器已鎖定穩定，三分鐘後將刷新下一位病患！</span>`;
+
+                } else {
+                    audio.playErrorSound();
+
+                    card.className = 'max-w-xl w-full bg-white border-2 rounded-3xl p-6 shadow-2xl border-rose-400 text-slate-700';
+                    iconBox.className = 'w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-bold bg-rose-100 text-rose-600 border border-rose-300';
+                    icon.className = 'fa-solid fa-xmark';
+
+                    let errorHint = '';
+                    if (!correctDevice) errorHint += '❌ 氧氣呼吸設備選擇不符合臨床需求。<br>';
+                    if (this.activePatient.requiredMedication === 'bosmin' && selectedMed !== 'bosmin') {
+                        errorHint += '❌ 漏選「Bosmin 霧化吸入」，無法減輕 Stridor 聲門下水腫！<br>';
+                    } else if (this.activePatient.requiredMedication === 'bronchodilator' && selectedMed !== 'bronchodilator') {
+                        errorHint += '❌ 漏選「支氣管擴張劑 (Combivent)」，無法解痙 Wheezing 平滑肌！<br>';
+                    } else if (this.activePatient.requiredMedication === 'none' && selectedMed !== 'none') {
+                        errorHint += '⚠️ 本病患無須額外霧化藥物。<br>';
+                    }
+
+                    document.getElementById('feedback-title').innerText = '急救處置未完全正確！';
+                    document.getElementById('feedback-subtitle').innerText = `標準處置：${this.activePatient.title}`;
+                    document.getElementById('feedback-body').innerHTML = `<p class="text-amber-600 font-bold mb-2">${errorHint}</p>${this.activePatient.explanation}`;
+
+                    this.activePatient.currentSpO2 = Math.max(60, this.activePatient.currentSpO2 - 10);
+                }
+
+                document.getElementById('feedback-modal').classList.remove('hidden');
+                this.updateUI();
+            }
+
+            closeFeedback() {
+                document.getElementById('feedback-modal').classList.add('hidden');
+            }
+
+            buyUpgrade(type) {
+                if (type === 'speed' && this.coins >= 50) {
+                    this.coins -= 50;
+                    this.upgrades.speedLvl++;
+                    this.player.speed += 1.0;
+                } else if (type === 'patience' && this.coins >= 80) {
+                    this.coins -= 80;
+                    this.upgrades.patienceLvl++;
+                }
+
+                document.getElementById('lvl-speed').innerText = this.upgrades.speedLvl;
+                document.getElementById('lvl-patience').innerText = this.upgrades.patienceLvl;
+                this.updateUI();
+            }
+
+            getRandomERWaypoint() {
+                const waypoints = [
+                    { x: 200, y: 390 }, { x: 450, y: 390 }, { x: 700, y: 390 }, { x: 950, y: 390 }, { x: 1200, y: 390 },
+                    { x: 200, y: 300 }, { x: 450, y: 300 }, { x: 700, y: 300 }, { x: 950, y: 300 }, { x: 1200, y: 300 },
+                    { x: 200, y: 500 }, { x: 450, y: 500 }, { x: 700, y: 500 }, { x: 950, y: 500 }, { x: 1200, y: 500 },
+                    { x: 550, y: 380 }, { x: 850, y: 380 }
+                ];
+                return waypoints[Math.floor(Math.random() * waypoints.length)];
+            }
+
+            update(dt) {
+                if (!this.running) return;
+
+                const now = Date.now();
+
+                if (now - this.lastAnimTime > 180) {
+                    this.lastAnimTime = now;
+                    this.animFrame++;
+                }
+
+                // AI Nurse Wandering Logic
+                this.nurses.forEach(nurse => {
+                    if (nurse.isChecking) {
+                        nurse.isMoving = false;
+                        nurse.timer -= dt;
+                        if (nurse.timer <= 0) {
+                            nurse.isChecking = false;
+                            const nextPt = this.getRandomERWaypoint();
+                            nurse.targetX = nextPt.x;
+                            nurse.targetY = nextPt.y;
+                        }
+                    } else {
+                        const dx = nurse.targetX - nurse.x;
+                        const dy = nurse.targetY - nurse.y;
+                        const dist = Math.hypot(dx, dy);
+
+                        if (dist > 6) {
+                            nurse.isMoving = true;
+                            nurse.x += (dx / dist) * nurse.speed;
+                            nurse.y += (dy / dist) * nurse.speed;
+                        } else {
+                            nurse.isChecking = true;
+                            nurse.timer = 3 + Math.random() * 3;
+                        }
+                    }
+                });
+
+                // Periodic 1s Updates for Timers & Stabilized Patients
+                if (now - this.lastTimerUpdate > 1000) {
+                    this.lastTimerUpdate = now;
+                    this.shiftTimeLeft--;
+
+                    let hasSevereAlarm = false;
+
+                    this.beds.forEach((bed) => {
+                        if (bed.patient) {
+                            if (bed.patient.isStabilized) {
+                                bed.patient.stabilizedTimer--;
+                                if (bed.patient.stabilizedTimer <= 0) {
+                                    this.assignRandomPatient(bed);
+                                }
+                            } else {
+                                bed.patient.timer--;
+                                if (bed.patient.timer <= 12) {
+                                    bed.patient.alarm = true;
+                                    hasSevereAlarm = true;
+                                }
+                            }
+                        }
+                    });
+
+                    if (hasSevereAlarm) {
+                        audio.playICUMonitorAlarm();
+                    }
+
+                    if (this.shiftTimeLeft <= 0) {
+                        this.endShift();
+                    }
+                }
+
+                let dx = 0;
+                let dy = 0;
+
+                if (this.keys['a'] || this.keys['arrowleft']) dx -= 1;
+                if (this.keys['d'] || this.keys['arrowright']) dx += 1;
+                if (this.keys['w'] || this.keys['arrowup']) dy -= 1;
+                if (this.keys['s'] || this.keys['arrowdown']) dy += 1;
+
+                if (this.joystickVector.x !== 0 || this.joystickVector.y !== 0) {
+                    dx = this.joystickVector.x;
+                    dy = this.joystickVector.y;
+                } else if (dx !== 0 && dy !== 0) {
+                    dx *= 0.7071;
+                    dy *= 0.7071;
+                }
+
+                this.player.isMoving = (dx !== 0 || dy !== 0);
+                this.player.x += dx * this.player.speed;
+                this.player.y += dy * this.player.speed;
+
+                this.player.x = Math.max(60, Math.min(1340, this.player.x));
+                this.player.y = Math.max(60, Math.min(740, this.player.y));
+
+                this.nearestBed = null;
+                let minDist = 110;
+
+                this.beds.forEach((bed) => {
+                    const dist = Math.hypot(bed.x - this.player.x, bed.y - this.player.y);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        this.nearestBed = bed;
+                    }
+                });
+
+                this.updateUI();
+            }
+
+            render() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                this.ctx.save();
+                const scale = Math.min(this.width / 1400, this.height / 820);
+                const offsetX = (this.width - 1400 * scale) / 2;
+                const offsetY = (this.height - 800 * scale) / 2;
+                this.ctx.translate(offsetX, offsetY);
+                this.ctx.scale(scale, scale);
+
+                // ER Floor Grid
+                this.ctx.fillStyle = '#fff1f2';
+                this.ctx.fillRect(0, 0, 1400, 800);
+
+                this.ctx.strokeStyle = '#fecdd3';
+                this.ctx.lineWidth = 2;
+                for (let x = 0; x < 1400; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, 800);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y < 800; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(1400, y);
+                    this.ctx.stroke();
+                }
+
+                // Central ER Aisle
+                this.ctx.fillStyle = '#ffe4e6';
+                this.ctx.fillRect(50, 360, 1300, 80);
+
+                // Central Station
+                PixelArtRendererER.drawERTriageStation(this.ctx, 520, 360);
+
+                // ER Wall Outline
+                this.ctx.strokeStyle = '#e11d48';
+                this.ctx.lineWidth = 6;
+                this.ctx.strokeRect(30, 30, 1340, 740);
+
+                // Render Crimson Red AI Nurses
+                this.nurses.forEach(nurse => {
+                    PixelArtRendererER.drawNurseNPC(this.ctx, nurse, this.animFrame);
+                });
+
+                // Render 10 ER Beds
+                this.beds.forEach((bed) => {
+                    PixelArtRendererER.drawERBedStation(this.ctx, bed, this.animFrame);
+                });
+
+                // Render RT Player
+                PixelArtRendererER.drawRTPlayer(this.ctx, this.player.x, this.player.y, this.animFrame, this.player.isMoving);
+
+                // Interaction Banner
+                if (this.nearestBed) {
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                    this.ctx.fillRect(this.player.x - 120, this.player.y - 75, 240, 36);
+                    this.ctx.strokeStyle = '#e11d48';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(this.player.x - 120, this.player.y - 75, 240, 36);
+
+                    this.ctx.fillStyle = '#be123c';
+                    this.ctx.font = 'bold 13px "Noto Sans TC"';
+                    this.ctx.textAlign = 'center';
+                    const btnLabel = this.nearestBed.patient && this.nearestBed.patient.isStabilized ? `[E] ${this.nearestBed.name} 穩定中` : `[E] 評估 ${this.nearestBed.name}`;
+                    this.ctx.fillText(btnLabel, this.player.x, this.player.y - 52);
+                }
+
+                this.ctx.restore();
+            }
+
+            updateUI() {
+                const mins = Math.floor(this.shiftTimeLeft / 60);
+                const secs = this.shiftTimeLeft % 60;
+                document.getElementById('hud-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('hud-score').innerText = this.score;
+                document.getElementById('hud-coins').innerText = this.coins;
+            }
+
+            endShift() {
+                this.running = false;
+                const accuracy = this.totalEvaluated > 0 ? Math.round((this.correctAnswers / this.totalEvaluated) * 100) : 100;
+
+                document.getElementById('stat-patients').innerText = `${this.correctAnswers} 人`;
+                document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+                document.getElementById('stat-coins').innerText = `${this.coins} 金幣`;
+
+                document.getElementById('end-modal').classList.remove('hidden');
+            }
+
+            gameLoop(timestamp) {
+                if (!this.running) return;
+
+                this.update(0.016);
+                this.render();
+
+                requestAnimationFrame((ts) => this.gameLoop(ts));
+            }
+        }
+
+        let game = null;
+        window.onload = () => {
+            game = new RTGameEngine();
+        };
+    </script>
+</body>
+</html>
