@@ -48,7 +48,6 @@
 
         <!-- Top Navigation HUD Bar -->
         <div class="absolute top-3 left-3 right-3 flex justify-between items-center pointer-events-none z-20 gap-2">
-            <!-- Shift Timer & Score -->
             <div class="flex items-center gap-3 bg-white/95 backdrop-blur border-2 border-rose-300 rounded-2xl p-2 px-4 shadow-lg pointer-events-auto">
                 <div class="flex items-center gap-2 text-rose-700 font-bold">
                     <i class="fa-solid fa-clock text-amber-500 animate-pulse"></i>
@@ -68,13 +67,11 @@
                 </div>
             </div>
 
-            <!-- Title Header -->
             <div class="hidden lg:flex bg-white/95 backdrop-blur border-2 border-rose-300 rounded-2xl px-6 py-2 items-center gap-3 shadow-lg">
                 <div class="w-3 h-3 rounded-full bg-rose-600 animate-ping"></div>
                 <span class="text-lg font-black tracking-wider text-rose-950">RT快來</span>
             </div>
 
-            <!-- Action Controls & Sound Buttons -->
             <div class="flex items-center gap-2 pointer-events-auto">
                 <button id="handbook-toggle-btn" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition text-xs sm:text-sm">
                     <i class="fa-solid fa-book-medical"></i> <span>RT手冊</span>
@@ -88,22 +85,22 @@
             </div>
         </div>
 
-        <!-- Assessment Modal -->
+        <!-- Assessment & Parameter Setting Modal -->
         <div id="assess-modal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-40 hidden">
             <div class="max-w-3xl w-full bg-white border-2 border-rose-400 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[92vh] text-slate-700">
                 
                 <div class="flex justify-between items-start border-b border-rose-100 pb-3 flex-shrink-0">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-300 flex items-center justify-center text-2xl text-rose-600 flex-shrink-0">
-                            <i class="fa-solid fa-truck-medical animate-bounce"></i>
+                            <i class="fa-solid fa-stethoscope animate-bounce"></i>
                         </div>
                         <div>
                             <div class="flex items-center gap-2 flex-wrap">
                                 <h3 id="patient-bed-title" class="text-lg sm:text-xl font-black text-rose-950">急診 1 床</h3>
                                 <span id="patient-name-info" class="text-base font-bold text-slate-800">張先生</span>
-                                <span id="patient-demographics" class="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full font-bold">52歲 / 男</span>
+                                <span id="patient-demographics" class="text-xs bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full font-bold">28歲 / 男</span>
                             </div>
-                            <p id="patient-diagnosis-label" class="text-xs text-rose-700 font-bold mt-1">主訴：重度 ARDS 呼吸衰竭、意識混濁 (GCS 7)</p>
+                            <p id="patient-diagnosis-label" class="text-xs text-rose-700 font-bold mt-1">主訴：嚴重外傷併胸廓受損、呼吸衰竭 (GCS 6)</p>
                         </div>
                     </div>
                     <button onclick="game.closeAssessment()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
@@ -115,7 +112,7 @@
                 <div class="my-3 bg-rose-50/90 rounded-2xl p-3 border border-rose-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center flex-shrink-0">
                     <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
                         <div class="text-[10px] text-slate-400 font-bold">SpO2 血氧飽和度</div>
-                        <div id="assess-spo2" class="text-lg sm:text-xl font-mono font-black text-rose-600 animate-pulse">68%</div>
+                        <div id="assess-spo2" class="text-lg sm:text-xl font-mono font-black text-rose-600 animate-pulse">65%</div>
                     </div>
                     <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
                         <div class="text-[10px] text-slate-400 font-bold">RR 呼吸速率</div>
@@ -129,63 +126,40 @@
                     </div>
                     <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-sm">
                         <div class="text-[10px] text-slate-400 font-bold">ABG / 臨床狀態</div>
-                        <div id="assess-abg" class="text-xs font-bold text-rose-800 mt-1">PaO2: 45 mmHg, GCS 7</div>
+                        <div id="assess-abg" class="text-xs font-bold text-rose-800 mt-1">PaO2: 38 mmHg, GCS 6</div>
                     </div>
                 </div>
 
                 <!-- Scrollable Treatments & Devices -->
                 <div class="treatment-scroll overflow-y-auto pr-2 space-y-3 flex-1 max-h-[55vh]">
                     
-                    <!-- Medication Options -->
-                    <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3">
-                        <div class="text-xs font-bold text-amber-800 mb-2 flex items-center gap-1.5">
-                            <i class="fa-solid fa-pills text-amber-600"></i>
-                            <span>霧化吸入藥物選擇 (Medication Inhalation Therapy)：</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                            <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:bg-amber-100/50 transition">
-                                <input type="radio" name="medication-choice" value="none" checked class="w-4 h-4 accent-sky-500">
-                                <span class="font-bold text-slate-700">無須用藥 (純氧/呼吸器)</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-amber-200 cursor-pointer hover:bg-amber-100/50 transition">
-                                <input type="radio" name="medication-choice" value="bronchodilator" class="w-4 h-4 accent-amber-500">
-                                <span class="font-bold text-amber-900">支氣管擴張劑 (Combivent)</span>
-                            </label>
-                            <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-rose-200 cursor-pointer hover:bg-rose-100/50 transition">
-                                <input type="radio" name="medication-choice" value="bosmin" class="w-4 h-4 accent-rose-500">
-                                <span class="font-bold text-rose-700">Bosmin (Epinephrine) 吸入</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <div class="text-xs font-bold text-slate-600 flex items-center gap-1.5 pt-1">
-                        <i class="fa-solid fa-kit-medical text-rose-500"></i> 請選擇氧氣與呼吸處置設備 (O2 & Ventilation Support Devices)：
+                        <i class="fa-solid fa-kit-medical text-rose-500"></i> Step 1: 請選擇氧氣與呼吸處置設備 (O2 & Ventilation Support Devices)：
                     </div>
 
-                    <!-- 9 Oxygen Devices Grid (ORDER: Intubation ventilator is LAST) -->
+                    <!-- Primary Devices Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-
-                        <button onclick="game.applyTreatment('hfnc')" class="bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-300 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
-                                <i class="fa-solid fa-wind"></i>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold text-emerald-950">1. HFNC 高流量鼻導管</div>
-                                <div class="text-[11px] text-emerald-700 font-bold">流速 30-60 L/min | 急性嚴重缺氧性呼吸衰竭 (NRM無效)</div>
-                            </div>
-                        </button>
-
-                        <button onclick="game.applyTreatment('nasal_cannula')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                        <button id="dev-btn-nasal_cannula" onclick="game.selectDevice('nasal_cannula')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-sky-200 text-sky-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
                                 <i class="fa-solid fa-headset"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-bold text-sky-950">2. 鼻導管 (Nasal Cannula)</div>
-                                <div class="text-[11px] text-slate-500">流速 1-6 L/min | FiO2 24-44% (輕度低血氧)</div>
+                                <div class="text-sm font-bold text-sky-950">1. 鼻導管 (Nasal Cannula)</div>
+                                <div class="text-[11px] text-slate-500">流速 1-6 L/min | 輕度缺氧 (SpO2 90-94%)</div>
                             </div>
                         </button>
 
-                        <button onclick="game.applyTreatment('venturi_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                        <button id="dev-btn-simple_mask" onclick="game.selectDevice('simple_mask')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-blue-200 text-blue-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-head-side-mask"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-blue-950">2. 簡單面罩 (Simple Mask)</div>
+                                <div class="text-[11px] text-slate-500">流速 6-10 L/min | 中度缺氧 / 張口呼吸</div>
+                            </div>
+                        </button>
+
+                        <button id="dev-btn-venturi_mask" onclick="game.selectDevice('venturi_mask')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
                                 <i class="fa-solid fa-filter"></i>
                             </div>
@@ -195,7 +169,7 @@
                             </div>
                         </button>
 
-                        <button onclick="game.applyTreatment('nrm')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                        <button id="dev-btn-nrm" onclick="game.selectDevice('nrm')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-rose-200 text-rose-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
                                 <i class="fa-solid fa-mask-ventilator"></i>
                             </div>
@@ -205,17 +179,17 @@
                             </div>
                         </button>
 
-                        <button onclick="game.applyTreatment('aerosol_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                        <button id="dev-btn-aerosol_mask" onclick="game.selectDevice('aerosol_mask')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-teal-200 text-teal-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
                                 <i class="fa-solid fa-smog"></i>
                             </div>
                             <div>
                                 <div class="text-sm font-bold text-teal-950">5. Aerosol Mask (潮濕面罩)</div>
-                                <div class="text-[11px] text-slate-500">高流量加濕 | 稀釋濃痰 / 拔管水腫</div>
+                                <div class="text-[11px] text-slate-500">高流量加濕 | 稀釋濃痰 / 兒科 Croup 哮吼</div>
                             </div>
                         </button>
 
-                        <button onclick="game.applyTreatment('tracheal_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                        <button id="dev-btn-tracheal_mask" onclick="game.selectDevice('tracheal_mask')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-purple-200 text-purple-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
                                 <i class="fa-solid fa-water"></i>
                             </div>
@@ -225,38 +199,284 @@
                             </div>
                         </button>
 
-                        <button onclick="game.applyTreatment('bipap')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                        <button id="dev-btn-hfnc" onclick="game.selectDevice('hfnc')" class="device-card bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-wind"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-emerald-950">7. HFNC 高流量鼻導管</div>
+                                <div class="text-[11px] text-emerald-700 font-bold">流速 30-60 L/min | 急性嚴重缺氧性呼吸衰竭</div>
+                            </div>
+                        </button>
+
+                        <button id="dev-btn-bipap" onclick="game.selectDevice('bipap')" class="device-card bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
                             <div class="w-10 h-10 rounded-xl bg-cyan-200 text-cyan-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
                                 <i class="fa-solid fa-fan"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-bold text-cyan-950">7. 非侵襲性正壓 (BiPAP / CPAP)</div>
+                                <div class="text-sm font-bold text-cyan-950">8. 非侵襲性正壓 (BiPAP / CPAP)</div>
                                 <div class="text-[11px] text-slate-500">高碳酸酸血症 / 急性肺水腫急救</div>
                             </div>
                         </button>
 
-                        <button onclick="game.applyTreatment('simple_mask')" class="bg-sky-50/80 hover:bg-sky-100 border border-sky-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
-                            <div class="w-10 h-10 rounded-xl bg-blue-200 text-blue-700 flex items-center justify-center text-lg font-bold flex-shrink-0">
-                                <i class="fa-solid fa-head-side-mask"></i>
+                        <button id="dev-btn-mdi" onclick="game.selectDevice('mdi')" class="device-card bg-indigo-50/90 hover:bg-indigo-100 border border-indigo-200 p-3 rounded-2xl text-left transition flex items-center gap-3 active:scale-98 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-200 text-indigo-800 flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                <i class="fa-solid fa-spray-can"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-bold text-blue-950">8. 簡單面罩 (Simple Mask)</div>
-                                <div class="text-[11px] text-slate-500">流速 5-10 L/min | FiO2 35-50%</div>
+                                <div class="text-sm font-bold text-indigo-950">9. 長效吸入藥物 MDI (定量吸入劑)</div>
+                                <div class="text-[11px] text-indigo-700 font-bold">COPD / 氣喘慢性穩定期維護用藥</div>
                             </div>
                         </button>
 
-                        <!-- LAST OPTION MUST BE INVASIVE VENTILATOR -->
-                        <button onclick="game.applyTreatment('ventilator')" class="bg-rose-100 hover:bg-rose-200 border-2 border-rose-400 p-3 rounded-2xl text-left transition flex items-center gap-3 col-span-1 sm:col-span-2 active:scale-98 shadow-md">
+                        <button id="dev-btn-ventilator" onclick="game.selectDevice('ventilator')" class="device-card bg-rose-100 hover:bg-rose-200 border-2 border-rose-400 p-3 rounded-2xl text-left transition flex items-center gap-3 col-span-1 sm:col-span-2 active:scale-98 shadow-md">
                             <div class="w-11 h-11 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl font-bold flex-shrink-0 shadow">
                                 <i class="fa-solid fa-lungs"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-black text-rose-950">9. 插管使用呼吸器</div>
-                                <div class="text-[11px] text-rose-700 font-bold">【重症急救】嚴重 ARDS / 呼吸衰竭 / 昏迷 (GCS ≤ 8) / 呼吸驟停</div>
+                                <div class="text-sm font-black text-rose-950">10. 插管使用呼吸器</div>
+                                <div class="text-[11px] text-rose-700 font-bold">【重症急救】嚴重外傷 / 嚴重 ARDS / 意識昏迷 (GCS ≤ 8) / 呼吸驟停</div>
                             </div>
                         </button>
-
                     </div>
+
+                    <!-- Dynamic Conditional Step 1: BiPAP Parameters (Shows ONLY when BiPAP is selected) -->
+                    <div id="bipap-params-box" class="hidden bg-cyan-50 border-2 border-cyan-400 rounded-2xl p-3.5 space-y-2 animate-fade-in shadow-sm">
+                        <div class="text-xs font-bold text-cyan-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-sliders text-cyan-600 text-sm"></i> ⚙️ BiPAP / CPAP 呼吸器設定參數：
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-cyan-800 font-bold">IPAP (cmH2O)</label>
+                                <select id="bipap-ipap" class="w-full bg-white border border-cyan-300 rounded-lg p-2 font-bold text-cyan-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 IPAP</option>
+                                    <option value="8">8 cmH2O</option>
+                                    <option value="9">9 cmH2O</option>
+                                    <option value="10">10 cmH2O</option>
+                                    <option value="11">11 cmH2O</option>
+                                    <option value="12">12 cmH2O</option>
+                                    <option value="13">13 cmH2O</option>
+                                    <option value="14">14 cmH2O</option>
+                                    <option value="15">15 cmH2O</option>
+                                    <option value="16">16 cmH2O</option>
+                                    <option value="17">17 cmH2O</option>
+                                    <option value="18">18 cmH2O</option>
+                                    <option value="19">19 cmH2O</option>
+                                    <option value="20">20 cmH2O</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-cyan-800 font-bold">EPAP (cmH2O)</label>
+                                <select id="bipap-epap" class="w-full bg-white border border-cyan-300 rounded-lg p-2 font-bold text-cyan-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 EPAP</option>
+                                    <option value="5">5 cmH2O</option>
+                                    <option value="6">6 cmH2O</option>
+                                    <option value="7">7 cmH2O</option>
+                                    <option value="8">8 cmH2O</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-cyan-800 font-bold">RR (bpm)</label>
+                                <select id="bipap-rr" class="w-full bg-white border border-cyan-300 rounded-lg p-2 font-bold text-cyan-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 RR</option>
+                                    <option value="8">8 次/分</option>
+                                    <option value="9">9 次/分</option>
+                                    <option value="10">10 次/分</option>
+                                    <option value="11">11 次/分</option>
+                                    <option value="12">12 次/分</option>
+                                    <option value="13">13 次/分</option>
+                                    <option value="14">14 次/分</option>
+                                    <option value="15">15 次/分</option>
+                                    <option value="16">16 次/分</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-cyan-800 font-bold">外接氧氣 Flow (LPM)</label>
+                                <select id="bipap-flow" class="w-full bg-white border border-cyan-300 rounded-lg p-2 font-bold text-cyan-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 Flow</option>
+                                    <option value="15">15 LPM</option>
+                                    <option value="14">14 LPM</option>
+                                    <option value="13">13 LPM</option>
+                                    <option value="12">12 LPM</option>
+                                    <option value="11">11 LPM</option>
+                                    <option value="10">10 LPM</option>
+                                    <option value="9">9 LPM</option>
+                                    <option value="8">8 LPM</option>
+                                    <option value="7">7 LPM</option>
+                                    <option value="6">6 LPM</option>
+                                    <option value="5">5 LPM</option>
+                                    <option value="4">4 LPM</option>
+                                    <option value="3">3 LPM</option>
+                                    <option value="2">2 LPM</option>
+                                    <option value="1">1 LPM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Conditional Step 1.5: HFNC Parameters (Shows ONLY when HFNC is selected) -->
+                    <div id="hfnc-params-box" class="hidden bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-3.5 space-y-2 animate-fade-in shadow-sm">
+                        <div class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-sliders text-emerald-600 text-sm"></i> ⚙️ HFNC 高流量鼻導管設定參數：
+                        </div>
+                        <div class="grid grid-cols-3 gap-2.5 text-xs">
+                            <div>
+                                <label class="text-[10px] text-emerald-800 font-bold">流速 Flow (L/min)</label>
+                                <select id="hfnc-flow" class="w-full bg-white border border-emerald-300 rounded-lg p-2 font-bold text-emerald-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 Flow</option>
+                                    <option value="20">20 L/min</option>
+                                    <option value="25">25 L/min</option>
+                                    <option value="30">30 L/min</option>
+                                    <option value="35">35 L/min</option>
+                                    <option value="40">40 L/min</option>
+                                    <option value="45">45 L/min</option>
+                                    <option value="50">50 L/min</option>
+                                    <option value="55">55 L/min</option>
+                                    <option value="60">60 L/min</option>
+                                    <option value="65">65 L/min</option>
+                                    <option value="70">70 L/min</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-emerald-800 font-bold">溫度 Temp (°C)</label>
+                                <select id="hfnc-temp" class="w-full bg-white border border-emerald-300 rounded-lg p-2 font-bold text-emerald-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 Temp</option>
+                                    <option value="37">37 °C (加溫加濕)</option>
+                                    <option value="34">34 °C</option>
+                                    <option value="31">31 °C</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-emerald-800 font-bold">FiO2 (%)</label>
+                                <select id="hfnc-fio2" class="w-full bg-white border border-emerald-300 rounded-lg p-2 font-bold text-emerald-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 FiO2</option>
+                                    <option value="100">100%</option>
+                                    <option value="90">90%</option>
+                                    <option value="80">80%</option>
+                                    <option value="70">70%</option>
+                                    <option value="60">60%</option>
+                                    <option value="50">50%</option>
+                                    <option value="40">40%</option>
+                                    <option value="30">30%</option>
+                                    <option value="21">21%</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Conditional Step 2: Mechanical Ventilator Parameters (Shows ONLY when Invasive Ventilator is selected) -->
+                    <div id="vent-params-box" class="hidden bg-rose-50 border-2 border-rose-400 rounded-2xl p-3.5 space-y-2 animate-fade-in shadow-sm">
+                        <div class="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-sliders text-rose-600 text-sm"></i> ⚙️ 插管侵襲性呼吸器設定參數：
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-rose-800 font-bold">Mode</label>
+                                <select id="vent-mode" class="w-full bg-white border border-rose-300 rounded-lg p-2 font-bold text-rose-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 Mode</option>
+                                    <option value="AC">A/C Mode</option>
+                                    <option value="SIMV">SIMV</option>
+                                    <option value="PSV">PSV</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-rose-800 font-bold">VT (mL)</label>
+                                <select id="vent-vt" class="w-full bg-white border border-rose-300 rounded-lg p-2 font-bold text-rose-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 VT</option>
+                                    <option value="100">100 mL</option>
+                                    <option value="200">200 mL</option>
+                                    <option value="300">300 mL</option>
+                                    <option value="400">400 mL</option>
+                                    <option value="500">500 mL</option>
+                                    <option value="600">600 mL</option>
+                                    <option value="700">700 mL</option>
+                                    <option value="800">800 mL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-rose-800 font-bold">RR (bpm)</label>
+                                <select id="vent-rr" class="w-full bg-white border border-rose-300 rounded-lg p-2 font-bold text-rose-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 RR</option>
+                                    <option value="8">8 次/分</option>
+                                    <option value="9">9 次/分</option>
+                                    <option value="10">10 次/分</option>
+                                    <option value="11">11 次/分</option>
+                                    <option value="12">12 次/分</option>
+                                    <option value="13">13 次/分</option>
+                                    <option value="14">14 次/分</option>
+                                    <option value="15">15 次/分</option>
+                                    <option value="16">16 次/分</option>
+                                    <option value="17">17 次/分</option>
+                                    <option value="18">18 次/分</option>
+                                    <option value="19">19 次/分</option>
+                                    <option value="20">20 次/分</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-rose-800 font-bold">PEEP (cmH2O)</label>
+                                <select id="vent-peep" class="w-full bg-white border border-rose-300 rounded-lg p-2 font-bold text-rose-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 PEEP</option>
+                                    <option value="5">5 cmH2O</option>
+                                    <option value="6">6 cmH2O</option>
+                                    <option value="7">7 cmH2O</option>
+                                    <option value="8">8 cmH2O</option>
+                                    <option value="9">9 cmH2O</option>
+                                    <option value="10">10 cmH2O</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-rose-800 font-bold">FiO2 (%)</label>
+                                <select id="vent-fio2" class="w-full bg-white border border-rose-300 rounded-lg p-2 font-bold text-rose-950 shadow-inner">
+                                    <option value="" disabled selected>請選擇 FiO2</option>
+                                    <option value="100">100%</option>
+                                    <option value="90">90%</option>
+                                    <option value="80">80%</option>
+                                    <option value="70">70%</option>
+                                    <option value="60">60%</option>
+                                    <option value="50">50%</option>
+                                    <option value="40">40%</option>
+                                    <option value="30">30%</option>
+                                    <option value="21">21%</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nebulizer Toggle Section -->
+                    <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3 space-y-2">
+                        <label class="flex items-center gap-2.5 cursor-pointer font-bold text-xs text-amber-950">
+                            <input type="checkbox" id="nebulizer-checkbox" onchange="game.toggleNebulizer()" class="w-5 h-5 accent-amber-600 rounded">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-smog text-amber-600"></i> 加開「霧化吸入治療 (Nebulizer Therapy)」
+                            </span>
+                        </label>
+
+                        <!-- Dynamic Conditional Step 3: Drug Options (Shows ONLY when Nebulizer is checked) -->
+                        <div id="nebulizer-drug-box" class="hidden pt-2 border-t border-amber-200/60 animate-fade-in">
+                            <div class="text-[11px] font-bold text-amber-800 mb-2">請選擇吸入性藥物 (Select Medication)：</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                                <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-amber-300 cursor-pointer hover:bg-amber-100/60 transition">
+                                    <input type="radio" name="medication-choice" value="besmate" checked class="w-4 h-4 accent-amber-600">
+                                    <span class="font-bold text-amber-950">Besmate 霧化吸入</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-amber-300 cursor-pointer hover:bg-amber-100/60 transition">
+                                    <input type="radio" name="medication-choice" value="bricanyl" class="w-4 h-4 accent-amber-600">
+                                    <span class="font-bold text-amber-950">Bricanyl 霧化吸入</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-rose-300 cursor-pointer hover:bg-rose-100/60 transition">
+                                    <input type="radio" name="medication-choice" value="bosmin" class="w-4 h-4 accent-rose-600">
+                                    <span class="font-bold text-rose-900">Bosmin (Epi) 吸入</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Execution Action Button -->
+                    <button onclick="game.confirmAndApplyTreatment()" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-base rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-stethoscope"></i>
+                        <span>確認並執行急救處置</span>
+                    </button>
+
                 </div>
             </div>
         </div>
@@ -296,21 +516,15 @@
 
                 <div class="mt-4 space-y-3 overflow-y-auto max-h-[78vh] pr-1 text-xs text-slate-700">
                     <div class="bg-rose-50 p-3 rounded-2xl border border-rose-200">
-                        <div class="font-bold text-rose-900 text-sm mb-1"><i class="fa-solid fa-lungs mr-1"></i> 插管使用呼吸器</div>
-                        <p class="text-slate-700 mb-1">● 適應症：嚴重 ARDS、呼吸肌耗竭衰竭、意識不清 (GCS ≤ 8)、呼吸驟停。</p>
-                        <p class="text-slate-600">● 關鍵處置：立刻進行氣管內插管，接上<b>侵襲性正壓呼吸器 (Mechanical Ventilator)</b>。</p>
-                    </div>
-
-                    <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
-                        <div class="font-bold text-emerald-900 text-sm mb-1"><i class="fa-solid fa-wind mr-1"></i> HFNC 高流量鼻導管</div>
-                        <p class="text-slate-700 mb-1">● 適應症：急性嚴重低血氧呼吸衰竭 (NRM 無效)，但尚未達立即插管標準。</p>
-                        <p class="text-slate-600">● 特點：提供最高 60 L/min 溫濕化高流速，精準 FiO2 並產生微量 PEEP 效應！</p>
+                        <div class="font-bold text-rose-900 text-sm mb-1"><i class="fa-solid fa-lungs mr-1"></i> 嚴重外傷與急救插管</div>
+                        <p class="text-slate-700 mb-1">● 適應症：嚴重多重外傷、胸廓受損呼吸衰竭、意識不清 (GCS ≤ 8)。</p>
+                        <p class="text-slate-600">● 關鍵處置：保護氣道，立即進行氣管內插管，接上<b>插管使用呼吸器</b>。</p>
                     </div>
 
                     <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
-                        <div class="font-bold text-amber-900 text-sm mb-1"><i class="fa-solid fa-pills mr-1"></i> Stridor 與 Wheezing 藥物選擇</div>
-                        <p class="text-slate-700 mb-1">● 吸氣 Stridor (喉鳴音)：拔管後上呼吸道水腫，首選 <b>Bosmin 霧化吸入</b>。</p>
-                        <p class="text-slate-600">● 呼氣 Wheezing (喘鳴音)：氣喘/COPD 支氣管痙攣，首選 <b>支氣管擴張劑 (Combivent)</b>。</p>
+                        <div class="font-bold text-amber-900 text-sm mb-1"><i class="fa-solid fa-child mr-1"></i> 兒科 Croup (哮吼) 處置</div>
+                        <p class="text-slate-700 mb-1">● 特徵：犬吠樣咳嗽 (Barking cough)、吸氣 Stridor。</p>
+                        <p class="text-slate-600">● 首選處置：給予 <b>Bosmin (Epinephrine) 霧化吸入</b> 配合 <b>Aerosol Mask (潮濕面罩)</b>。</p>
                     </div>
                 </div>
             </div>
@@ -360,7 +574,7 @@
             </div>
         </div>
 
-        <!-- Start Modal -->
+        <!-- Concise Welcome Start Modal -->
         <div id="start-modal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-50">
             <div class="max-w-md w-full bg-white border-2 border-rose-400 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden text-slate-700">
                 <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 border border-rose-300 shadow">
@@ -368,15 +582,16 @@
                 </div>
                 <h1 class="text-3xl font-black text-rose-950 tracking-wide mb-1">RT快來</h1>
                 <p class="text-xs text-rose-600 font-bold uppercase tracking-wider mb-4">Respiratory Therapist Simulator</p>
-                <div class="text-slate-600 text-xs sm:text-sm mb-5 leading-relaxed text-left bg-rose-50 p-3.5 rounded-2xl border border-rose-100 space-y-1.5">
-                    <p>🩵 <b>急診 10 床重症區</b>：正確處置「插管使用呼吸器」、「HFNC 高流量鼻導管」與霧化急救。</p>
-                    <p>🩸 <b>臨床評估</b>：判斷嚴重 ARDS、喘鳴音 (Wheezing)、喉鳴音 (Stridor)。</p>
-                    <p>🩺 <b>像素 RT & 走動護理師</b>：天空藍刷手服配戴聽診器與識別證。</p>
-                    <p>⏱️ <b>3分鐘穩定冷卻</b>：處置正確後，病人生理穩定維持 180 秒。</p>
+                
+                <div class="text-slate-600 text-xs sm:text-sm mb-5 leading-relaxed text-left bg-rose-50 p-4 rounded-2xl border border-rose-100 space-y-2">
+                    <p class="font-bold text-rose-900 text-sm border-b border-rose-200 pb-1">🩵 急診 10 床重症區巡視任務：</p>
+                    <p>● <b>評估病患</b>：觀察 SpO2、聽診音與 ABG 臨床狀況。</p>
+                    <p>● <b>給予處置</b>：選擇氧氣設備、霧化藥物或設定 <b>BiPAP / 呼吸器參數</b>。</p>
+                    <p>● <b>穩定時間</b>：正確處置後病人生理穩定 <b>30 ~ 120 秒</b>。</p>
                 </div>
 
                 <button id="start-game-btn" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-lg rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 active:translate-y-0">
-                    <i class="fa-solid fa-truck-medical mr-2"></i> 開始巡視
+                    <i class="fa-solid fa-truck-medical mr-2"></i> 開始巡視 (Start Shift)
                 </button>
             </div>
         </div>
@@ -411,7 +626,7 @@
             </div>
         </div>
 
-        <!-- Mobile Controls -->
+        <!-- Mobile Touch Controls -->
         <div id="mobile-controls" class="absolute inset-0 pointer-events-none z-20 sm:hidden">
             <div id="joystick-base" class="absolute bottom-6 left-6 w-32 h-32 bg-white/80 rounded-full border-2 border-rose-300 flex items-center justify-center pointer-events-auto touch-none shadow-lg backdrop-blur">
                 <div id="joystick-thumb" class="w-12 h-12 bg-rose-600 rounded-full border-2 border-white shadow"></div>
@@ -441,7 +656,6 @@
                 }
             }
 
-            // IEC Standard 5-pulse high priority alarm chime
             playICUMonitorAlarm() {
                 if (this.muted || !this.ctx) return;
                 const now = this.ctx.currentTime;
@@ -602,109 +816,116 @@
 
         const PATIENT_CASES = [
             {
-                id: 'intubation_ards',
-                name: '張先生',
-                age: 52,
+                id: 'trauma_intubation',
+                name: '車禍張先生',
+                age: 28,
                 gender: '男',
-                diagnosis: '重度 ARDS 併急性呼吸衰竭 (GCS 7)',
-                abg: 'PaO2: 42 mmHg (NRM 100%), PaCO2: 68, pH: 7.15',
-                spo2: 68,
+                isPediatric: false,
+                diagnosis: '嚴重多重外傷併胸廓連枷胸、意識昏迷 (GCS 6)',
+                abg: 'PaO2: 38 mmHg, PaCO2: 72, GCS 6 (呼吸衰竭)',
+                spo2: 65,
                 rr: 38,
                 breathSound: 'Coarse crackle (粗濕囉音)',
                 requiredMedication: 'none',
                 correctDevice: 'ventilator',
-                title: '重度 ARDS 併意識昏迷：必須「插管使用呼吸器」',
-                explanation: '<b>臨床理由：</b>患者為重度 ARDS，使用 NRM 100% 下 PaO2 仍僅 42 mmHg，且併發意識障礙 (GCS 7) 與嚴重高碳酸酸血症。<br><br>屬於<b>絕對適應症：必須立刻進行氣管內插管，並「插管使用呼吸器」</b>以設定 PEEP 與潮氣量進行保護性肺通氣！'
+                title: '嚴重外傷與呼吸衰竭：必須「插管使用呼吸器」',
+                explanation: '<b>臨床理由：</b>嚴重車禍多重外傷伴隨連枷胸，意識深度昏迷 (GCS 6) 且 PaO2 僅 38 mmHg。<br><br>屬於<b>絕對適應症：必須立刻建立人工氣道並「插管使用呼吸器」</b>！'
+            },
+            {
+                id: 'peds_croup',
+                name: '小明 (兒科)',
+                age: 3,
+                gender: '男',
+                isPediatric: true,
+                diagnosis: '兒科 Croup (哮吼) 併吸氣 Stridor 與犬吠咳嗽',
+                abg: '吸氣高亢 Stridor，上呼吸道水腫 (無需高濃度給氧)',
+                spo2: 93,
+                rr: 30,
+                breathSound: 'Stridor (喉鳴音)',
+                requiredMedication: 'bosmin',
+                correctDevice: 'aerosol_mask',
+                title: '兒科 Croup 哮吼：首選 Bosmin 或 Bricanyl 霧化吸入消腫',
+                explanation: '<b>臨床理由：</b>兒科 Croup (哮吼) 特徵為犬吠樣咳嗽與吸氣 **Stridor (喉鳴音)**。<br><br>此類病患主要為上呼吸道水腫，**無需高濃度氧氣治療**。給予 <b>Bosmin (Epinephrine)</b> 或 <b>Bricanyl</b> 霧化吸入皆可收縮黏膜、舒緩氣道！'
+            },
+            {
+                id: 'mild_hypoxia_nc',
+                name: '林阿姨',
+                age: 58,
+                gender: '女',
+                isPediatric: false,
+                diagnosis: '腹部手術後輕度缺氧 (Mild Hypoxia)',
+                abg: 'PaO2: 68 mmHg (輕度低血氧)',
+                spo2: 92,
+                rr: 20,
+                breathSound: 'Clear (清脆無雜音)',
+                requiredMedication: 'none',
+                correctDevice: 'nasal_cannula',
+                title: '輕度缺氧：首選「鼻導管 (Nasal Cannula)」',
+                explanation: '<b>臨床理由：</b>患者術後輕度 SpO2 降至 92%，無呼吸窘迫。使用<b>鼻導管 (Nasal Cannula) 2-4 L/min</b> 即可輕鬆提昇血氧！'
+            },
+            {
+                id: 'moderate_hypoxia_sm',
+                name: '陳老伯',
+                age: 68,
+                gender: '男',
+                isPediatric: false,
+                diagnosis: '急性腸胃炎併張口呼吸中度缺氧',
+                abg: 'PaO2: 58 mmHg (中度缺氧)',
+                spo2: 88,
+                rr: 26,
+                breathSound: 'Clear (清脆)',
+                requiredMedication: 'none',
+                correctDevice: 'simple_mask',
+                title: '中度缺氧/張口呼吸：首選「簡單面罩 (Simple Mask)」',
+                explanation: '<b>臨床理由：</b>患者中度缺氧 (SpO2 88%) 且習慣張口呼吸，鼻導管效果佳。首選<b>簡單面罩 (Simple Mask) 6-8 L/min</b>！'
+            },
+            {
+                id: 'copd_bipap',
+                name: '郭爺爺',
+                age: 75,
+                gender: '男',
+                isPediatric: false,
+                diagnosis: 'COPD 急性惡化併高碳酸血症酸中毒 (pH 7.24, PaCO2 68)',
+                abg: 'pH 7.24, PaCO2: 68 mmHg, PaO2: 50 mmHg',
+                spo2: 80,
+                rr: 32,
+                breathSound: 'Wheezing (喘鳴音)',
+                requiredMedication: 'besmate',
+                correctDevice: 'bipap',
+                title: 'COPD 急性高碳酸血症：首選「非侵襲性正壓 (BiPAP)」',
+                explanation: '<b>臨床理由：</b>COPD 急性惡化伴高碳酸血呼吸酸中毒。首選<b>BiPAP (NIV)</b> 設定 IPAP/EPAP 輔助通氣洗出 CO2！'
+            },
+            {
+                id: 'asthma_besmate',
+                name: '王小姐',
+                age: 25,
+                gender: '女',
+                isPediatric: false,
+                diagnosis: '急性氣喘發作 (Acute Asthma Exacerbation)',
+                abg: 'PaO2: 56 mmHg, 雙肺氣道狹窄',
+                spo2: 82,
+                rr: 32,
+                breathSound: 'Wheezing (喘鳴音)',
+                requiredMedication: 'besmate',
+                correctDevice: 'nrm',
+                title: '氣喘發作：選用 NRM 高濃度氧氣 ＋ Besmate 霧化吸入',
+                explanation: '<b>臨床理由：</b>聽診高亢 **Wheezing (喘鳴音)**。使用 **NRM (非再吸入面罩)** 補充高血氧，配合 <b>Besmate (支氣管擴張劑) 霧化吸入</b>！'
             },
             {
                 id: 'hfnc_hypoxemia',
                 name: '李太太',
                 age: 64,
                 gender: '女',
-                diagnosis: '嚴重肺炎併嚴重缺氧性呼吸衰竭',
-                abg: 'PaO2: 52 mmHg (NRM 15L/min), PaCO2: 36',
+                isPediatric: false,
+                diagnosis: '嚴重肺炎併急性缺氧性呼吸衰竭',
+                abg: 'PaO2: 52 mmHg (NRM 15L/min 效果不佳)',
                 spo2: 81,
-                rr: 32,
+                rr: 34,
                 breathSound: 'Coarse crackle (粗濕囉音)',
                 requiredMedication: 'none',
                 correctDevice: 'hfnc',
-                title: '急性低血氧無效：首選「HFNC 高流量鼻導管」',
-                explanation: '<b>臨床理由：</b>患者為急性缺氧性呼吸衰竭，使用 NRM 15 L/min 仍無法拉高血氧，但意識清醒。<br><br>此時首選<b>「HFNC 高流量鼻導管」(流速 30-60 L/min)</b>，提供溫濕化高濃度氧氣並產生微量 PEEP 沖洗死腔！'
-            },
-            {
-                id: 'stridor_post_extubation',
-                name: '陳小姐',
-                age: 34,
-                gender: '女',
-                diagnosis: '拔管後上呼吸道水腫 / 聲門下水腫',
-                abg: 'PaO2: 62 mmHg, 吸氣高亢 Stridor',
-                spo2: 83,
-                rr: 30,
-                breathSound: 'Stridor (喉鳴音)',
-                requiredMedication: 'bosmin',
-                correctDevice: 'aerosol_mask',
-                title: '拔管後喉頭水腫：首選 Aerosol Mask ＋ Bosmin 霧化吸入',
-                explanation: '<b>臨床理由：</b>聽診得吸氣高亢 **Stridor (喉鳴音)**，為拔管後聲門下水腫所致。<br><br>應立即給予 <b>Bosmin (Epinephrine) 霧化吸入</b> 收縮黏膜血管減輕水腫，並搭配 <b>Aerosol Mask (潮濕面罩)</b> 提供水氣！'
-            },
-            {
-                id: 'asthma_attack',
-                name: '王先生',
-                age: 29,
-                gender: '男',
-                diagnosis: '急性氣喘重度發作 (Acute Asthma Attack)',
-                abg: 'PaO2: 56 mmHg, 氣道阻力極高',
-                spo2: 82,
-                rr: 34,
-                breathSound: 'Wheezing (喘鳴音)',
-                requiredMedication: 'bronchodilator',
-                correctDevice: 'nrm',
-                title: '急性氣喘發作：選用 NRM 高濃度氧氣 ＋ 支氣管擴張劑 (Combivent)',
-                explanation: '<b>臨床理由：</b>氣喘重度發作聽診為 **Wheezing (喘鳴音)**。<br><br>應使用 **NRM (非再吸入面罩)** 改善嚴重缺氧，同時<b>必須給予「支氣管擴張劑 (Combivent/Ventolin)」霧化吸入</b>解除支氣管痙攣！'
-            },
-            {
-                id: 'copd_exacerbation',
-                name: '劉爺爺',
-                age: 74,
-                gender: '男',
-                diagnosis: 'COPD 急性發作併高碳酸血症',
-                abg: 'PaCO2: 66 mmHg, pH: 7.27',
-                spo2: 83,
-                rr: 26,
-                breathSound: 'Wheezing (喘鳴音)',
-                requiredMedication: 'bronchodilator',
-                correctDevice: 'venturi_mask',
-                title: 'COPD 急性發作：首選「凡吐利面罩」＋ 支氣管擴張劑',
-                explanation: '<b>臨床理由：</b>COPD 慢性二氧化碳滯留患者需避免高濃度氧氣抑止缺氧驅動 (Hypoxic Drive)。首選<b>凡吐利面罩 (Venturi Mask)</b> 精準控制 FiO2 (28%)，並配合<b>支氣管擴張劑</b>吸入！'
-            },
-            {
-                id: 'tracheostomy_care',
-                name: '黃先生',
-                age: 62,
-                gender: '男',
-                diagnosis: '氣切切開術後氣道乾燥 / 分泌物黏稠',
-                abg: '氣道分泌物結痂，缺乏上呼吸道濕化',
-                spo2: 88,
-                rr: 22,
-                breathSound: 'Coarse crackle (粗濕囉音)',
-                requiredMedication: 'none',
-                correctDevice: 'tracheal_mask',
-                title: '氣切造口照顧：選用「Tracheal mask (氣切面罩)」',
-                explanation: '<b>臨床理由：</b>氣切患者喪失鼻腔加溫加濕能力，且聽診常得 <b>Coarse crackle (粗濕囉音)</b>。使用 <b>Tracheal mask (氣切面罩)</b> 給予充足水霧，防止痰液乾涸堵塞氣切管！'
-            },
-            {
-                id: 'acute_pulmonary_edema',
-                name: '趙爺爺',
-                age: 82,
-                gender: '男',
-                diagnosis: '急性心因性肺水腫 (Acute Pulmonary Edema)',
-                abg: 'PaCO2: 54 mmHg, 雙肺大量濕囉音',
-                spo2: 76,
-                rr: 36,
-                breathSound: 'Coarse crackle (粗濕囉音)',
-                requiredMedication: 'none',
-                correctDevice: 'bipap',
-                title: '急性肺水腫：首選「非侵襲性正壓 (BiPAP / CPAP)」',
-                explanation: '<b>臨床理由：</b>肺水腫聽診呈 <b>Coarse crackle (粗濕囉音)</b>。BiPAP 的 PEEP 能將肺泡積液壓回血管，大幅減輕心臟後負擔與呼吸肌疲勞！'
+                title: '急性低血氧：首選「HFNC 高流量鼻導管」',
+                explanation: '<b>臨床理由：</b>NRM 下 SpO2 仍僅 81%。首選<b>「HFNC 高流量鼻導管」(30-60 L/min)</b> 提供高濃度 FiO2 與微量 PEEP！'
             }
         ];
 
@@ -721,7 +942,6 @@
                 }
             }
 
-            // ER Triage Station
             static drawERTriageStation(ctx, x, y) {
                 ctx.save();
                 ctx.translate(x, y);
@@ -742,15 +962,9 @@
                 ctx.strokeRect(147, -23, 66, 31);
                 ctx.strokeRect(262, -23, 66, 31);
 
-                ctx.fillStyle = '#f43f5e';
-                ctx.fillRect(110, 20, 20, 14);
-                ctx.fillStyle = '#f59e0b';
-                ctx.fillRect(230, 15, 12, 22);
-
                 ctx.restore();
             }
 
-            // ULTRA DETAILED RT SPRITE: Light Blue Scrubs, Draped Stethoscope, Pinned ID Badge
             static drawRTPlayer(ctx, x, y, animFrame, isMoving) {
                 const p = 5;
                 const legOffset = isMoving ? (animFrame % 2 === 0 ? -2 : 2) : 0;
@@ -760,16 +974,9 @@
                 ctx.translate(x - 30, y - 50);
 
                 const pal = {
-                    H: '#334155', // Hair
-                    F: '#fed7aa', // Skin Tone
-                    E: '#1e293b', // Eyes
-                    M: '#f43f5e', // Lips
-                    S: '#38bdf8', // Light Blue Scrubs
-                    D: '#0284c7', // Dark Blue Pants
-                    W: '#ffffff', // ID Badge / Shoes
-                    T: '#ef4444', // Red Stethoscope Tube
-                    L: '#94a3b8', // Silver Bell
-                    I: '#f59e0b'  // Gold ID Clip
+                    H: '#334155', F: '#fed7aa', E: '#1e293b', M: '#f43f5e',
+                    S: '#38bdf8', D: '#0284c7', W: '#ffffff', T: '#ef4444',
+                    L: '#94a3b8', I: '#f59e0b'
                 };
 
                 const head = [
@@ -806,7 +1013,6 @@
                 ctx.restore();
             }
 
-            // DETAILED ER NURSE SPRITE: Crimson Red Scrubs (紅色刷手服)
             static drawNurseNPC(ctx, nurse, animFrame) {
                 const p = 5;
                 const legOffset = nurse.isMoving ? (animFrame % 2 === 0 ? -2 : 2) : 0;
@@ -815,19 +1021,12 @@
                 ctx.translate(nurse.x - 25, nurse.y - 45);
 
                 const pal = {
-                    H: '#78350f', // Hair
-                    F: '#fde68a', // Skin
-                    E: '#1e293b', // Eyes
-                    R: '#dc2626', // Crimson Red Scrubs
-                    D: '#991b1b', // Dark Red Pants
-                    W: '#ffffff'  // Cap / Shoes
+                    H: '#78350f', F: '#fde68a', E: '#1e293b',
+                    R: '#dc2626', D: '#991b1b', W: '#ffffff'
                 };
 
                 ctx.fillStyle = pal.W;
                 ctx.fillRect(3 * p, 0, 5 * p, 2 * p);
-                ctx.fillStyle = pal.R;
-                ctx.fillRect(5 * p, 2, 4, 4);
-
                 ctx.fillStyle = pal.F;
                 ctx.fillRect(2 * p, 2 * p, 7 * p, 4 * p);
                 ctx.fillStyle = pal.E;
@@ -836,7 +1035,6 @@
 
                 ctx.fillStyle = pal.R;
                 ctx.fillRect(1 * p, 6 * p, 9 * p, 5 * p);
-
                 ctx.fillStyle = pal.W;
                 ctx.fillRect(8 * p, 7 * p, 3 * p, 4 * p);
 
@@ -853,7 +1051,6 @@
                 ctx.restore();
             }
 
-            // ER Resuscitation Bed Station
             static drawERBedStation(ctx, bed, animFrame) {
                 const x = bed.x;
                 const y = bed.y;
@@ -861,23 +1058,16 @@
                 ctx.save();
                 ctx.translate(x - 85, y - 60);
 
-                // Red Emergency Headwall Outlets
                 ctx.strokeStyle = '#ef4444';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(-10, -35, 190, 150);
 
                 ctx.fillStyle = '#fca5a5';
                 ctx.fillRect(0, -20, 170, 20);
-                
-                ctx.fillStyle = '#22c55e'; // Green O2
-                ctx.fillRect(20, -16, 12, 12);
-                ctx.fillStyle = '#eab308'; // Vacuum
-                ctx.fillRect(40, -16, 12, 12);
+                ctx.fillStyle = '#22c55e'; ctx.fillRect(20, -16, 12, 12);
+                ctx.fillStyle = '#eab308'; ctx.fillRect(40, -16, 12, 12);
+                ctx.fillStyle = '#3b82f6'; ctx.fillRect(60, -16, 12, 12);
 
-                ctx.fillStyle = '#3b82f6'; // Compressed Air
-                ctx.fillRect(60, -16, 12, 12);
-
-                // Bedframe
                 ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
                 ctx.fillRect(6, 35, 158, 80);
 
@@ -894,9 +1084,14 @@
                     const isCyanotic = bed.patient.currentSpO2 < 85 && !isStabilized;
                     const skinColor = isCyanotic ? '#a5f3fc' : '#fde047';
                     const breathY = (bed.patient.alarm && animFrame % 2 === 0) ? -3 : 0;
+                    const isPeds = bed.patient.isPediatric;
 
                     ctx.fillStyle = skinColor;
-                    ctx.fillRect(20, 34, 22, 28);
+                    if (isPeds) {
+                        ctx.fillRect(20, 40, 16, 20);
+                    } else {
+                        ctx.fillRect(20, 34, 22, 28);
+                    }
 
                     ctx.fillStyle = '#475569';
                     ctx.fillRect(14, 28, 28, 12);
@@ -915,20 +1110,16 @@
                         ctx.fillStyle = '#1e293b';
                         ctx.fillRect(32, 40, 4, 3);
                         ctx.fillRect(32, 50, 4, 3);
-                        ctx.fillStyle = '#475569';
-                        ctx.fillRect(38, 46, 2, 4);
                     }
 
                     ctx.fillStyle = isStabilized ? '#10b981' : '#dc2626';
-                    ctx.fillRect(42, 12 + breathY, 112, 86);
+                    ctx.fillRect(42, 12 + breathY, isPeds ? 70 : 112, 86);
 
-                    // Attached Equipment Overlay
                     const eq = bed.attachedEquipment;
                     if (eq) {
                         if (eq === 'nasal_cannula') {
                             ctx.fillStyle = '#10b981';
                             ctx.fillRect(26, 38, 16, 3);
-                            ctx.fillRect(34, 32, 3, 16);
                         } else if (eq === 'simple_mask') {
                             ctx.fillStyle = 'rgba(14, 165, 233, 0.75)';
                             ctx.fillRect(28, 38, 14, 16);
@@ -941,49 +1132,33 @@
                             ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
                             ctx.fillRect(28, 38, 14, 16);
                             ctx.fillStyle = '#0284c7';
-                            ctx.beginPath();
-                            ctx.ellipse(44, 64, 10, 16, 0, 0, Math.PI * 2);
-                            ctx.fill();
+                            ctx.beginPath(); ctx.ellipse(44, 64, 10, 16, 0, 0, Math.PI * 2); ctx.fill();
                         } else if (eq === 'aerosol_mask') {
                             ctx.fillStyle = 'rgba(20, 184, 166, 0.75)';
                             ctx.fillRect(28, 38, 14, 16);
-                            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                            for (let m = 0; m < 5; m++) {
-                                const mx = 44 + Math.sin(animFrame + m) * 6;
-                                const my = 36 - m * 5;
-                                ctx.fillRect(mx, my, 4, 4);
-                            }
                         } else if (eq === 'tracheal_mask') {
                             ctx.fillStyle = '#a855f7';
                             ctx.fillRect(36, 28, 6, 32);
                         } else if (eq === 'hfnc') {
                             ctx.fillStyle = '#059669';
                             ctx.fillRect(26, 36, 16, 5);
-                            ctx.fillStyle = '#34d399';
-                            ctx.fillRect(38, 32, 40, 5);
                         } else if (eq === 'bipap') {
                             ctx.fillStyle = '#06b6d4';
                             ctx.fillRect(26, 34, 18, 22);
+                        } else if (eq === 'mdi') {
+                            ctx.fillStyle = '#6366f1';
+                            ctx.fillRect(36, 42, 10, 18);
                         } else if (eq === 'ventilator') {
                             ctx.fillStyle = '#f43f5e';
                             ctx.fillRect(32, 46, 16, 4);
                             ctx.fillStyle = '#0284c7';
                             ctx.fillRect(44, 48, 42, 6);
                         }
-
-                        if (bed.attachedMedication === 'bosmin') {
-                            ctx.fillStyle = '#f43f5e';
-                            ctx.fillRect(40, 54, 8, 10);
-                        } else if (bed.attachedMedication === 'bronchodilator') {
-                            ctx.fillStyle = '#f59e0b';
-                            ctx.fillRect(40, 54, 8, 10);
-                        }
                     }
                 }
 
                 ctx.restore();
 
-                // Multi-parameter Bedside Monitor
                 this.drawERMonitor(ctx, bed.x + 90, bed.y - 40, bed.patient, animFrame);
             }
 
@@ -1002,8 +1177,6 @@
                 if (patient && patient.alarm && !isStabilized) {
                     ctx.fillStyle = animFrame % 2 === 0 ? '#dc2626' : '#f87171';
                     ctx.fillRect(20, -12, 16, 12);
-                    ctx.fillStyle = '#fee2e2';
-                    ctx.fillRect(24, -10, 8, 8);
                 }
 
                 ctx.fillStyle = '#0f172a';
@@ -1066,7 +1239,6 @@
                     isMoving: false
                 };
 
-                // AI ER Nurses Wandering Loop
                 this.nurses = [
                     { x: 300, y: 390, targetX: 300, targetY: 390, speed: 1.5, isChecking: false, timer: 0, isMoving: false },
                     { x: 1100, y: 430, targetX: 1100, targetY: 430, speed: 1.4, isChecking: false, timer: 0, isMoving: false }
@@ -1256,6 +1428,7 @@
                 }
 
                 this.activePatient = this.nearestBed.patient;
+                this.selectedDeviceKey = 'nasal_cannula';
 
                 document.getElementById('patient-bed-title').innerText = this.nearestBed.name;
                 document.getElementById('patient-name-info').innerText = this.activePatient.name;
@@ -1267,8 +1440,12 @@
                 document.getElementById('assess-breath').innerText = this.activePatient.breathSound;
                 document.getElementById('assess-abg').innerText = this.activePatient.abg;
 
-                const radios = document.getElementsByName('medication-choice');
-                radios.forEach(r => r.checked = (r.value === 'none'));
+                // Reset Nebulizer
+                const nebCheck = document.getElementById('nebulizer-checkbox');
+                nebCheck.checked = false;
+                this.toggleNebulizer();
+
+                this.selectDevice('nasal_cannula');
 
                 if (this.activePatient.breathSound.includes('Stridor')) {
                     audio.playStridorSound();
@@ -1280,19 +1457,136 @@
             }
 
             closeAssessment() {
-                audio.stopBreathSound();
                 document.getElementById('assess-modal').classList.add('hidden');
             }
 
-            applyTreatment(deviceKey) {
+            selectDevice(deviceKey) {
+                this.selectedDeviceKey = deviceKey;
+
+                // Highlight active device card
+                document.querySelectorAll('.device-card').forEach(btn => {
+                    btn.classList.remove('ring-4', 'ring-rose-500', 'bg-rose-50');
+                });
+                const activeBtn = document.getElementById(`dev-btn-${deviceKey}`);
+                if (activeBtn) {
+                    activeBtn.classList.add('ring-4', 'ring-rose-500', 'bg-rose-50');
+                }
+
+                // CONDITIONAL STEP 1: BiPAP
+                const bipapBox = document.getElementById('bipap-params-box');
+                if (deviceKey === 'bipap') {
+                    bipapBox.classList.remove('hidden');
+                } else {
+                    bipapBox.classList.add('hidden');
+                }
+
+                // CONDITIONAL STEP 1.5: HFNC
+                const hfncBox = document.getElementById('hfnc-params-box');
+                if (deviceKey === 'hfnc') {
+                    hfncBox.classList.remove('hidden');
+                } else {
+                    hfncBox.classList.add('hidden');
+                }
+
+                // CONDITIONAL STEP 2: Ventilator
+                const ventBox = document.getElementById('vent-params-box');
+                if (deviceKey === 'ventilator') {
+                    ventBox.classList.remove('hidden');
+                } else {
+                    ventBox.classList.add('hidden');
+                }
+            }
+
+            toggleNebulizer() {
+                const nebCheck = document.getElementById('nebulizer-checkbox');
+                const drugBox = document.getElementById('nebulizer-drug-box');
+                if (nebCheck.checked) {
+                    drugBox.classList.remove('hidden');
+                } else {
+                    drugBox.classList.add('hidden');
+                }
+            }
+
+            confirmAndApplyTreatment() {
+                if (!this.selectedDeviceKey) {
+                    alert('請選擇一項氧氣或呼吸處置設備！');
+                    return;
+                }
+
+                if (this.selectedDeviceKey === 'hfnc') {
+                    const flow = document.getElementById('hfnc-flow').value;
+                    const temp = document.getElementById('hfnc-temp').value;
+                    const fio2 = document.getElementById('hfnc-fio2').value;
+
+                    if (!flow || !temp || !fio2) {
+                        alert('請選擇完整的 HFNC 設定參數 (流速 Flow, 溫度 Temp, FiO2)！');
+                        return;
+                    }
+                }
+
+                // Check BiPAP parameters validation
+                if (this.selectedDeviceKey === 'bipap') {
+                    const ipap = parseFloat(document.getElementById('bipap-ipap').value);
+                    const epap = parseFloat(document.getElementById('bipap-epap').value);
+                    const rr = document.getElementById('bipap-rr').value;
+                    const flow = document.getElementById('bipap-flow').value;
+
+                    if (isNaN(ipap) || isNaN(epap) || !rr || !flow) {
+                        alert('請填寫完整的 BiPAP 設定參數 (IPAP, EPAP, RR, 外接氧氣 Flow)！');
+                        return;
+                    }
+
+                    if (ipap - epap < 8) {
+                        alert(`⚠️ 通氣不足！\n當前 IPAP - EPAP 壓差僅為 ${ipap - epap} cmH2O (< 8 cmH2O)，壓力支持 (Pressure Support) 不足，無法有效輔助通氣與洗出 CO2！\n請加大 IPAP 或調低 EPAP！`);
+                        return;
+                    }
+                }
+
+                // Check ventilator parameters validation
+                if (this.selectedDeviceKey === 'ventilator') {
+                    const mode = document.getElementById('vent-mode').value;
+                    const vt = parseFloat(document.getElementById('vent-vt').value);
+                    const rr = parseFloat(document.getElementById('vent-rr').value);
+                    const peep = document.getElementById('vent-peep').value;
+                    const fio2 = document.getElementById('vent-fio2').value;
+
+                    if (!mode || isNaN(vt) || isNaN(rr) || peep === '' || fio2 === '') {
+                        alert('請填寫完整的呼吸器設定參數 (Mode, VT, RR, PEEP, FiO2)！');
+                        return;
+                    }
+
+                    const minuteVentilation = vt * rr;
+                    if (minuteVentilation < 6000) {
+                        alert(`⚠️ 通氣不足 (Hypoventilation)！\n當前每分鐘通氣量 (RR × VT) 為 ${minuteVentilation} mL/min (< 6000 mL/min)，會造成 CO2 蓄積與呼吸性酸中毒！\n請提高潮氣容積 (VT) 或呼吸速率 (RR)！`);
+                        return;
+                    }
+                }
+
+                const nebCheck = document.getElementById('nebulizer-checkbox');
+                let selectedMed = 'none';
+                if (nebCheck.checked) {
+                    selectedMed = document.querySelector('input[name="medication-choice"]:checked')?.value || 'besmate';
+                }
+
+                this.applyTreatment(this.selectedDeviceKey, selectedMed);
+            }
+
+            applyTreatment(deviceKey, selectedMed) {
                 if (!this.activePatient) return;
 
-                const selectedMed = document.querySelector('input[name="medication-choice"]:checked')?.value || 'none';
                 this.closeAssessment();
                 this.totalEvaluated++;
 
-                const correctDevice = (deviceKey === this.activePatient.correctDevice);
-                const correctMed = (selectedMed === this.activePatient.requiredMedication);
+                let correctDevice = (deviceKey === this.activePatient.correctDevice);
+                let correctMed = (selectedMed === this.activePatient.requiredMedication);
+
+                if (this.activePatient.id === 'peds_croup') {
+                    // Croup patient needs no special oxygen device (any non-invasive device is acceptable)
+                    // Bosmin OR Bricanyl are both accepted!
+                    correctDevice = (deviceKey !== 'ventilator');
+                    correctMed = (selectedMed === 'bosmin' || selectedMed === 'bricanyl');
+                }
+
                 const isCorrect = correctDevice && correctMed;
 
                 this.nearestBed.attachedEquipment = deviceKey;
@@ -1311,19 +1605,42 @@
                     audio.playSuccessChime();
                     audio.playO2Hiss();
 
-                    // Lock Patient in Stabilized Mode for 3 Minutes (180 seconds)
+                    // RANDOM STABILIZED TIMER BETWEEN 30s AND 120s
+                    const randomCooldown = Math.floor(Math.random() * 91) + 30;
+
                     this.nearestBed.patient.currentSpO2 = 98;
                     this.nearestBed.patient.alarm = false;
                     this.nearestBed.patient.isStabilized = true;
-                    this.nearestBed.patient.stabilizedTimer = 180;
+                    this.nearestBed.patient.stabilizedTimer = randomCooldown;
 
                     card.className = 'max-w-xl w-full bg-white border-2 rounded-3xl p-6 shadow-2xl border-emerald-400 text-slate-700';
                     iconBox.className = 'w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-bold bg-emerald-100 text-emerald-600 border border-emerald-300';
                     icon.className = 'fa-solid fa-check';
 
-                    document.getElementById('feedback-title').innerText = `處置正確！生理指數維持穩定 3 分鐘 (+${earnedCoins}金幣)`;
+                    let paramSummary = '';
+                    if (deviceKey === 'bipap') {
+                        const ipap = document.getElementById('bipap-ipap').value;
+                        const epap = document.getElementById('bipap-epap').value;
+                        const rr = document.getElementById('bipap-rr').value;
+                        const flow = document.getElementById('bipap-flow').value;
+                        paramSummary = `<br><span class="text-cyan-700 font-bold">⚙️ BiPAP 設定：IPAP ${ipap} / EPAP ${epap} cmH2O (PS = ${ipap - epap} cmH2O), RR ${rr} 次/分, 外接氧氣 Flow ${flow} LPM</span>`;
+                    } else if (deviceKey === 'hfnc') {
+                        const flow = document.getElementById('hfnc-flow').value;
+                        const temp = document.getElementById('hfnc-temp').value;
+                        const fio2 = document.getElementById('hfnc-fio2').value;
+                        paramSummary = `<br><span class="text-emerald-700 font-bold">⚙️ HFNC 設定：流速 ${flow} L/min, 溫度 ${temp}°C, FiO2 ${fio2}%</span>`;
+                    } else if (deviceKey === 'ventilator') {
+                        const mode = document.getElementById('vent-mode').value;
+                        const vt = document.getElementById('vent-vt').value;
+                        const rr = document.getElementById('vent-rr').value;
+                        const peep = document.getElementById('vent-peep').value;
+                        const fio2 = document.getElementById('vent-fio2').value;
+                        paramSummary = `<br><span class="text-rose-700 font-bold">⚙️ 呼吸器設定：${mode} Mode, VT ${vt} mL, RR ${rr}, PEEP ${peep}, FiO2 ${fio2}%</span>`;
+                    }
+
+                    document.getElementById('feedback-title').innerText = `處置正確！生理指數維持穩定 ${randomCooldown} 秒 (+${earnedCoins}金幣)`;
                     document.getElementById('feedback-subtitle').innerText = this.activePatient.title;
-                    document.getElementById('feedback-body').innerHTML = `${this.activePatient.explanation}<br><br><span class="text-emerald-700 font-bold">⏱️ 病人生理監視器已鎖定穩定，三分鐘後將刷新下一位病患！</span>`;
+                    document.getElementById('feedback-body').innerHTML = `${this.activePatient.explanation}${paramSummary}<br><br><span class="text-emerald-700 font-bold">⏱️ 病人生理監視器已穩定，${randomCooldown} 秒後將刷新下一位病患！</span>`;
 
                 } else {
                     audio.playErrorSound();
@@ -1333,13 +1650,11 @@
                     icon.className = 'fa-solid fa-xmark';
 
                     let errorHint = '';
-                    if (!correctDevice) errorHint += '❌ 氧氣呼吸設備選擇不符合臨床需求。<br>';
+                    if (!correctDevice) errorHint += '❌ 氧氣/呼吸處置設備選擇不符合臨床需求。<br>';
                     if (this.activePatient.requiredMedication === 'bosmin' && selectedMed !== 'bosmin') {
-                        errorHint += '❌ 漏選「Bosmin 霧化吸入」，無法減輕 Stridor 聲門下水腫！<br>';
-                    } else if (this.activePatient.requiredMedication === 'bronchodilator' && selectedMed !== 'bronchodilator') {
-                        errorHint += '❌ 漏選「支氣管擴張劑 (Combivent)」，無法解痙 Wheezing 平滑肌！<br>';
-                    } else if (this.activePatient.requiredMedication === 'none' && selectedMed !== 'none') {
-                        errorHint += '⚠️ 本病患無須額外霧化藥物。<br>';
+                        errorHint += '❌ 漏選或錯選「Bosmin 霧化吸入」，無法緩解喉頭/聲門下水腫！<br>';
+                    } else if ((this.activePatient.requiredMedication === 'besmate' || this.activePatient.requiredMedication === 'bricanyl') && (selectedMed !== 'besmate' && selectedMed !== 'bricanyl')) {
+                        errorHint += '❌ 漏選或錯選「Besmate / Bricanyl 支氣管擴張劑」，無法解除支氣管痙攣！<br>';
                     }
 
                     document.getElementById('feedback-title').innerText = '急救處置未完全正確！';
@@ -1376,8 +1691,7 @@
                 const waypoints = [
                     { x: 200, y: 390 }, { x: 450, y: 390 }, { x: 700, y: 390 }, { x: 950, y: 390 }, { x: 1200, y: 390 },
                     { x: 200, y: 300 }, { x: 450, y: 300 }, { x: 700, y: 300 }, { x: 950, y: 300 }, { x: 1200, y: 300 },
-                    { x: 200, y: 500 }, { x: 450, y: 500 }, { x: 700, y: 500 }, { x: 950, y: 500 }, { x: 1200, y: 500 },
-                    { x: 550, y: 380 }, { x: 850, y: 380 }
+                    { x: 200, y: 500 }, { x: 450, y: 500 }, { x: 700, y: 500 }, { x: 950, y: 500 }, { x: 1200, y: 500 }
                 ];
                 return waypoints[Math.floor(Math.random() * waypoints.length)];
             }
@@ -1392,7 +1706,6 @@
                     this.animFrame++;
                 }
 
-                // AI Nurse Wandering Logic
                 this.nurses.forEach(nurse => {
                     if (nurse.isChecking) {
                         nurse.isMoving = false;
@@ -1419,7 +1732,6 @@
                     }
                 });
 
-                // Periodic 1s Updates for Timers & Stabilized Patients
                 if (now - this.lastTimerUpdate > 1000) {
                     this.lastTimerUpdate = now;
                     this.shiftTimeLeft--;
@@ -1499,51 +1811,37 @@
                 this.ctx.translate(offsetX, offsetY);
                 this.ctx.scale(scale, scale);
 
-                // ER Floor Grid
                 this.ctx.fillStyle = '#fff1f2';
                 this.ctx.fillRect(0, 0, 1400, 800);
 
                 this.ctx.strokeStyle = '#fecdd3';
                 this.ctx.lineWidth = 2;
                 for (let x = 0; x < 1400; x += 50) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x, 0);
-                    this.ctx.lineTo(x, 800);
-                    this.ctx.stroke();
+                    this.ctx.beginPath(); this.ctx.moveTo(x, 0); this.ctx.lineTo(x, 800); this.ctx.stroke();
                 }
                 for (let y = 0; y < 800; y += 50) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, y);
-                    this.ctx.lineTo(1400, y);
-                    this.ctx.stroke();
+                    this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(1400, y); this.ctx.stroke();
                 }
 
-                // Central ER Aisle
                 this.ctx.fillStyle = '#ffe4e6';
                 this.ctx.fillRect(50, 360, 1300, 80);
 
-                // Central Station
                 PixelArtRendererER.drawERTriageStation(this.ctx, 520, 360);
 
-                // ER Wall Outline
                 this.ctx.strokeStyle = '#e11d48';
                 this.ctx.lineWidth = 6;
                 this.ctx.strokeRect(30, 30, 1340, 740);
 
-                // Render Crimson Red AI Nurses
                 this.nurses.forEach(nurse => {
                     PixelArtRendererER.drawNurseNPC(this.ctx, nurse, this.animFrame);
                 });
 
-                // Render 10 ER Beds
                 this.beds.forEach((bed) => {
                     PixelArtRendererER.drawERBedStation(this.ctx, bed, this.animFrame);
                 });
 
-                // Render RT Player
                 PixelArtRendererER.drawRTPlayer(this.ctx, this.player.x, this.player.y, this.animFrame, this.player.isMoving);
 
-                // Interaction Banner
                 if (this.nearestBed) {
                     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
                     this.ctx.fillRect(this.player.x - 120, this.player.y - 75, 240, 36);
